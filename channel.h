@@ -4,3 +4,5 @@ struct channel_t {
 };
 
 extern void add_channel(struct channel_t *channel);
+
+extern struct channel_t *get_channel(char *name);

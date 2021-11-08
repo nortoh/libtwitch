@@ -16,3 +16,18 @@ void add_channel(struct channel_t *channel) {
 
     printf("Adding new channel\n", channel->name);
 }
+
+struct channel_t *get_channel(char *name) {
+    struct channel_t *curr = head;
+
+    while(curr) {
+        
+        if(curr->name == name) {
+            return curr;
+        }
+
+        curr = curr->next;
+    }
+
+    return 0
+}
