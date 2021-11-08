@@ -1,8 +1,13 @@
 #include "user.h"
 #include "channel.h"
+#include <stdlib.h>
 
-static struct user_t *head;
+/* Currently no functions for user.c */
 
-void add_user(struct user_t *user) {
-    
+struct user_t* create_user(char* name, char* display_name) {
+    struct user_t* user = malloc(sizeof(struct user_t));
+    user->name = name;
+    user->display_name = display_name;
+    user->next = 0;
+    return user;
 }

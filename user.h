@@ -1,6 +1,7 @@
 struct user_t {
-    char *name;
-    char *display_name;
+    char* name;
+    char* display_name;
+    struct user_t* next;
 };
 
-extern void add_user(struct user_t *user);
+struct user_t* create_user(char* user, char* display_name);
