@@ -1,0 +1,1 @@
+extern int connect(char* host, int port);

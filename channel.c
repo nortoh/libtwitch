@@ -60,6 +60,12 @@ void add_channel(struct channel_t* channel) {
     size++;
 }
 
+void remove_channel(struct channel_t* channel) {
+    if(!has_channel(channel)) return;
+
+    
+}
+
 struct channel_t* get_channel(char *name) {
     struct channel_t* curr = head;
 

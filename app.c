@@ -2,11 +2,15 @@
 #include <stdlib.h>
 #include "channel.h"
 #include "user.h"
+#include "bot.h"
+#include "t_socket.h"
 
 int main(int argc, char **argv) {
 
     printf("Driver class\n");
     
+    struct bot_t* bot = create_bot("bot");
+
     struct channel_t *test = create_channel("test");
     add_channel(test);
 
@@ -17,6 +21,8 @@ int main(int argc, char **argv) {
     add_user(main_channel, nortoh_user);
     
     list_channels();
+
+    twitch_connect("localhost", 8000);
 
     return 0;
 }
