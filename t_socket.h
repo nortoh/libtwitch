@@ -1,1 +1,3 @@
-extern int t_conn(char* host, int port);
+extern int connect_to_twitch();
+
+extern int conn(char* host, int port);
