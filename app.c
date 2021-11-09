@@ -7,7 +7,7 @@
 
 int main(int argc, char **argv) {
 
-    printf("Driver class\n");
+    printf("Drivesr class\n");
     
     struct bot_t* bot = create_bot("bot");
 
@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     
     list_channels();
 
-    twitch_connect("localhost", 8000);
+    t_conn("44.226.36.141", 6667);
 
     return 0;
 }

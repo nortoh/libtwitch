@@ -1,0 +1,1 @@
+extern void info(char* file, char* message);

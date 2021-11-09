@@ -1,1 +1,1 @@
-extern int connect(char* host, int port);
+extern int t_conn(char* host, int port);
