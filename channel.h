@@ -13,6 +13,8 @@ extern struct channel_t *get_channel(char* name);
 
 extern void add_channel(struct channel_t* channel);
 
+extern void remove_channel(struct channel_t* channel);
+
 extern int has_channel(struct channel_t* channel);
 
 extern void add_user(struct channel_t* channel, struct user_t* user);

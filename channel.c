@@ -63,7 +63,27 @@ void add_channel(struct channel_t* channel) {
 void remove_channel(struct channel_t* channel) {
     if(!has_channel(channel)) return;
 
-    
+    // If we are removing the top channel
+    if(head == channel) {
+        void* tmp = head;
+        head = head->next;
+        free(tmp);
+        return;
+    }
+
+    struct channel_t* curr = head;
+    struct channel_t* prev = 0;
+
+    while(curr) {
+        if(channel == curr) {
+            prev->next = curr->next;
+            free(curr);
+            break;
+        }
+
+        prev = curr;
+        curr = curr->next;
+    }
 }
 
 struct channel_t* get_channel(char *name) {
