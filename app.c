@@ -4,11 +4,17 @@
 #include "user.h"
 #include "bot.h"
 #include "t_socket.h"
+#include "config.h"
+#include "utils.h"
 
 int main(int argc, char **argv) {
+    read_configuration();
+    printf("Loaded configuration\n");
 
-    printf("Drivesr class\n");
-    
+    printf("Driver class\n");
+    printf("Connecting as (%s)", get_config_value("username"));
+
+    // Testing
     struct bot_t* bot = create_bot("bot");
 
     struct channel_t *test = create_channel("test");
@@ -22,7 +28,13 @@ int main(int argc, char **argv) {
     
     list_channels();
 
-    t_conn("44.226.36.141", 6667);
+    read_configuration();
+    get_config_loaded();
+    printf("%s\n", get_config_value("username"));
 
+    // This works
+    connect_to_twitch();
+
+    printf("Continuing after socket creation\n");
     return 0;
 }
