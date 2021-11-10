@@ -5,18 +5,18 @@ struct channel_t {
     struct channel_t* next;
 };
 
-extern struct channel_t* create_channel(char* name);
+struct channel_t* create_channel(char* name);
 
 extern void list_channels();
 
 extern struct channel_t *get_channel(char* name);
 
-extern void add_channel(struct channel_t* channel);
+extern void add_channel(char* name);
 
-extern void remove_channel(struct channel_t* channel);
+extern void remove_channel(char* name);
 
-extern int has_channel(struct channel_t* channel);
+extern int has_channel(char* name);
 
-extern void add_user(struct channel_t* channel, struct user_t* user);
+extern void add_user(char* name, struct user_t* user);
 
-extern int has_user(struct channel_t* channel, char* username);
+extern int has_user(char* name, char* username);
