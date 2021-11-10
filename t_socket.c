@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -88,22 +90,6 @@ void* thread_start(void *vargs) {
     for(token = strtok_r(buffer, "\r\n", &result); token != 0; token = strtok_r(0, "\r\n", &result)) {
         handle(token);
     }
-    
-    
-    // do {
-    //     received = read(sock, buffer, 1024);
-    //     printf("< %s\n", buffer);
-    // } while(running);
-
-    // int count = 0;
-    // while(running) {
-    //     if(count < 1000) {
-    //         printf("[%d]\n", count);
-    //         count++;
-    //         continue;
-    //     }
-    //     break;
-    // }
 }
 
 int connect_to_twitch() {
