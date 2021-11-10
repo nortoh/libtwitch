@@ -12,28 +12,28 @@ int main(int argc, char **argv) {
     printf("Loaded configuration\n");
 
     printf("Driver class\n");
-    printf("Connecting as (%s)", get_config_value("username"));
+    printf("Connecting as (%s)\n", get_config_value("username"));
 
     // Testing
     struct bot_t* bot = create_bot("bot");
 
-    struct channel_t *test = create_channel("test");
-    add_channel(test);
+    add_channel("#main");
 
-    struct channel_t *main_channel = create_channel("main");
-    add_channel(main_channel);
+    add_channel("#test");
 
     struct user_t* nortoh_user = create_user("nortoh", "nortoh");
-    add_user(main_channel, nortoh_user);
-    
+    add_user("#main", nortoh_user);
+
+    printf("BEFORE\n");    
     list_channels();
 
-    read_configuration();
-    get_config_loaded();
-    printf("%s\n", get_config_value("username"));
+    printf("AFTER\n");
+    remove_channel("#main");
+
+    list_channels();
 
     // This works
-    connect_to_twitch();
+    // connect_to_twitch();
 
     printf("Continuing after socket creation\n");
     return 0;
