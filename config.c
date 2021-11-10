@@ -1,7 +1,10 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+
 
 struct configuration_t {
     char* key;
@@ -74,9 +77,15 @@ void handle_config_line(char* line) {
     }
 
     struct configuration_t* node = malloc(sizeof(struct configuration_t));
-    asprintf(&node->key, "%s", key);
-    asprintf(&node->value, "%s", value);
+    int get_key = asprintf(&node->key, "%s", key);
+    int get_value = asprintf(&node->value, "%s", value);
     node->next = 0;
+
+    if(!get_key) {
+        printf("Failed to malloc for key (%s:%s)\n", key, value);
+    } else if(!get_value) {
+        printf("Failed to malloc for value (%s:%s)\n", key, value);
+    }
 
     add_config_node(node);
 }
