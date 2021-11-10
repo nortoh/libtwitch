@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,8 +17,7 @@ static int size = 0;
 
 struct channel_t* create_channel(char* name) {
     struct channel_t* channel = malloc(sizeof(struct channel_t));
-    channel->chan_name = malloc((strlen(name) + 1) * sizeof(char));
-    sprintf(channel->chan_name, "#%s", name);
+    asprintf(&channel->chan_name, "#%s", name);
     channel->name = name;
     channel->users = 0;
     channel->next = 0;
@@ -47,11 +48,6 @@ int has_channel(struct channel_t* channel) {
 
 void add_channel(struct channel_t* channel) {
     if(has_channel(channel)) return;
-
-    if(!head) {
-        head = channel;
-        return;
-    }
 
     // Add to the top of the list
     channel->next = head;
@@ -103,15 +99,17 @@ void remove_users(struct channel_t* channel) {
     struct user_t* curr = channel->users;
 
     while(curr) {
+        struct user_t* tmp = curr;
         curr = curr->next;
+        free(tmp);
     }
 }
 
 int destroy_channel(struct channel_t* channel) {
     if(!has_channel(channel)) return 0;
 
-    free(channel->chan_name);
     remove_users(channel);
+    free(channel->chan_name);
     free(channel);
 
     return 1;
