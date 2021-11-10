@@ -102,7 +102,13 @@ struct channel_t* get_channel(char *name) {
     return 0;
 }
 
-void remove_users(struct channel_t* channel) {
+void remove_users(char* name) {
+    struct channel_t* channel = get_channel(name);
+
+    if(!channel) {
+        return;
+    }
+
     struct user_t* curr = channel->users;
 
     while(curr) {
