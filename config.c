@@ -12,7 +12,7 @@ struct configuration_t {
 static struct configuration_t* head = 0;
 
 void print_config_node(struct configuration_t* node) {
-    printf("[%p] Key: %s, Value: %s, Next: %p\n", node, node->key, node->value, node->next);
+    printf("[Config] Key: %s, Value: %s\n", node->key, node->value);
 }
 
 int has_key(char* key) {
