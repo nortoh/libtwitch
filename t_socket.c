@@ -10,7 +10,8 @@
 #include "utils.h"
 #include "config.h"
 
-#define MAX_RECV_LEN 512
+#define MAX_RECV_LEN 512 // 512B
+#define OVERFLOW_SIZE 100 // 512B * 20 = 51.2KB
 
 static int sock = 0, running = 0, connected = 0, motd = 0, bufferptr = 0;
 static char buffer[MAX_RECV_LEN]; 
@@ -162,6 +163,7 @@ void* thread_start(void *vargs) {
     send_raw("CAP REQ :twitch.tv/membership\r\n");
 
     send_raw("JOIN #s1mple\r\n");
+    send_raw("JOIN #auronplay\r\n");
 
     if(connection < 0) {
         error(__FILE__, "Error calling conn()\n");
@@ -171,8 +173,13 @@ void* thread_start(void *vargs) {
     int bufptr = 0;
     int bufsize = 0;
     char ch;
+
+
     char chunk[MAX_RECV_LEN];
-    size_t size_recv = 0, total_size  = 0;
+
+    char overflow_buffer[5 * MAX_RECV_LEN];
+    int more_count = 0;
+    size_t size_recv = 0, total_size  = 0, overflow_size = 0;
     int more_flag = 0;
     int error_flag = 0;
 
@@ -181,68 +188,58 @@ void* thread_start(void *vargs) {
         memset(chunk, 0, MAX_RECV_LEN);
 
         // Receive data of length MAX_RECV_LEN to chunk
-        if((size_recv = recv(sock, chunk, MAX_RECV_LEN, 0)) > 0) {
-            printf("Bytes Received: %ld\n", size_recv);
-            
-            if(size_recv == -1) {
-                error_flag = 1;
-            } else if(size_recv == MAX_RECV_LEN) {
-                printf(" - Need to store the next one\n");
-                more_flag = 1;
+        do {
+            if((size_recv = recv(sock, chunk, MAX_RECV_LEN, 0)) > 0) {
+                printf("Bytes Received: %ld\n", size_recv);
+
+                if(size_recv == -1) {
+                    printf("Connection aborted");
+                    exit(1);
+                }
+
+                // Detect if our buffer has what we need
+                int newline_flag = chunk[size_recv - 1] == '\n';
+                int carriage_flag = chunk[size_recv - 2] == '\r';
+
+                if(!newline_flag && !carriage_flag) {
+                    printf("@@@ THIS CHUNK IS MISSING DATA!!!!\n");
+                    overflow_size += size_recv;
+                    printf("Storing %ldB in overflow. Total Size: %ld\n", size_recv, overflow_size);
+                    
+                    // Perform memory shift here
+
+                    more_flag = 1;
+                    more_count++;
+                } else {
+
+                    // We were wanting more before, send the overflow buffer
+                    if(more_flag) {
+                        printf("Many Cycles\n");
+                        // handle(overflow_buffer);
+                    } else {
+                        // One cycle, send the chunk buffer
+                        printf("One Cycle\n");
+                        // handle(chunk);
+                    }
+
+                    // We see that our latest stream ends in \r\n
+                    printf("@@@@ FINISHED WITH STORING %ldB IN OVERFLOW AND DOING %d CYCLES\n", overflow_size, more_count);
+                    more_count = 0;
+                    overflow_size = 0;
+                    more_flag = 0;
+                }
+
+                /*
+                for(int i = 0; i < size_recv; ++i) {
+                    printf("[%d:%d] %c\n", i, chunk[i], chunk[i]);
+                }
+                */
+                printf("%s\n\n", chunk);
+
+                // Clear the buffer
+                memset(chunk, 0, MAX_RECV_LEN);
             }
-
-            for(int i = 0; i < size_recv; ++i) {
-                printf("%d ", chunk[i]);
-            }
-
-            printf("\n");
-
-            // chunk[size_recv] = '\0';
-            // printf("Last char @ %ld is %c:%d\n", size_recv, chunk[size_recv], chunk[size_recv]);
-
-            total_size += size_recv;
-            printf("%s\n\n", chunk);
-        }
-        
-        total_size = 0;
-        // bytes_read = read(sock, &buffer, (size_t) MAX_RECV_LEN);
-
-        // // Nothing is received, exit loop
-        // if(bytes_read <= 0) break;
-
-        // /*
-        
-        // Our current stream from the buffer states we need more data.
-        // We will set a flag to indicate we are misssing data.
-        // */
-        // if(bytes_read == MAX_RECV_LEN) {
-                        
-        //     // This is the first time we are requesting for a longer buffer
-        //     if(!more_flag) {
-        //         more_flag = 1;
-        //         strncpy(temp_buffer, buffer, sizeof(buffer));
-                
-        //     } else {
-
-        //         // If we still receive more maxed buffers, we can handle them here
-        //     }
-
-        // } else {
-        //     if(more_flag) {
-        //         printf("Only one time bro\n");
-
-        //         // Concate strings. Make sure we got EVERYTHING now
-        //         strncat(temp_buffer, buffer, sizeof(buffer));
-        //         printf("Temp Buffer: %s\n", temp_buffer);
-        //         more_flag = 0;
-        //         memset(temp_buffer, 0, sizeof(temp_buffer));
-        //         continue;
-        //     }
-        // }
-
-        // printf("Buffer: %s\n", buffer);
-        
-        // printf("Bytes Received: %d\n", bytes_read);
+        } while(more_flag);
     }
 
     printf("Closing socket\n");
