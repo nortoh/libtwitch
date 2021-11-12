@@ -15,8 +15,14 @@ extern void add_channel(char* name);
 
 extern void remove_channel(char* name);
 
+void remove_users(char* name);
+
 extern int has_channel(char* name);
 
-extern void add_user(char* name, struct user_t* user);
+extern void list_users(char* name);
 
-extern int has_user(char* name, char* username);
+extern struct user_t* get_user(char* channel_name, char* username);
+
+extern void add_user(char* channel_name, char* username);
+
+extern int has_user(char* channel_name, char* username);
