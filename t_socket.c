@@ -28,21 +28,21 @@ int send_raw(char* raw) {
 
 
 char* irc_2_type(char* raw) {
-    // printf("RAW LINE: %s\n", raw);
-    // printf("%d\n", !(strstr(raw, "PRIVMSG") == 0));
+    // We must make sure PRIVMSG is not part of any other type
+    // since it allows for "code injection".
     if(!strstr(raw, "PRIVMSG") == 0) return "PRIVMSG";
-    if(!(strstr(raw, "JOIN") == 0) && strstr(raw, "PRIVMSG") == 0) return "JOIN";
-    if(!(strstr(raw, "PART") == 0) && strstr(raw, "PRIVMSG") == 0) return "PART";
-    if(!(strstr(raw, "CAP") == 0) && strstr(raw, "PRIVMSG") == 0) return "CAP";
-    if(!(strstr(raw, "USERNOTICE") == 0) && strstr(raw, "PRIVMSG") == 0) return "USERNOTICE";
-    if(!(strstr(raw, "ROOMSTATE") == 0) && strstr(raw, "PRIVMSG") == 0) return "ROOMSTATE";
-    if(!(strstr(raw, "USERSTATE") == 0) && strstr(raw, "PRIVMSG") == 0) return "USERSTATE";
-    if(!(strstr(raw, "CLEARCHAT") == 0) && strstr(raw, "PRIVMSG") == 0) return "CLEARCHAT";
-    if(!(strstr(raw, "CLEARMSG") == 0) && strstr(raw, "PRIVMSG") == 0) return "CLEARMSG";
-    if(!(strstr(raw, "HOSTTARGET") == 0) && strstr(raw, "PRIVMSG") == 0) return "HOSTTARGET";
-    if(!(strstr(raw, "CTCP") == 0) && strstr(raw, "PRIVMSG") == 0) return "CTCP";
-    if(!(strstr(raw, "RECONNECT") == 0) && strstr(raw, "PRIVMSG") == 0) return "RECONNECT";
-    if(!(strstr(raw, "NOTICE") == 0) && strstr(raw, "PRIVMSG") == 0) return "NOTICE";
+    if(!strstr(raw, "JOIN") == 0 && strstr(raw, "PRIVMSG") == 0) return "JOIN";
+    if(!strstr(raw, "PART") == 0 && strstr(raw, "PRIVMSG") == 0) return "PART";
+    if(!strstr(raw, "CAP") == 0 && strstr(raw, "PRIVMSG") == 0) return "CAP";
+    if(!strstr(raw, "USERNOTICE") == 0 && strstr(raw, "PRIVMSG") == 0) return "USERNOTICE";
+    if(!strstr(raw, "ROOMSTATE") == 0 && strstr(raw, "PRIVMSG") == 0) return "ROOMSTATE";
+    if(!strstr(raw, "USERSTATE") == 0 && strstr(raw, "PRIVMSG") == 0) return "USERSTATE";
+    if(!strstr(raw, "CLEARCHAT") == 0 && strstr(raw, "PRIVMSG") == 0) return "CLEARCHAT";
+    if(!strstr(raw, "CLEARMSG") == 0 && strstr(raw, "PRIVMSG") == 0) return "CLEARMSG";
+    if(!strstr(raw, "HOSTTARGET") == 0 && strstr(raw, "PRIVMSG") == 0) return "HOSTTARGET";
+    if(!strstr(raw, "CTCP") == 0 && strstr(raw, "PRIVMSG") == 0) return "CTCP";
+    if(!strstr(raw, "RECONNECT") == 0 && strstr(raw, "PRIVMSG") == 0) return "RECONNECT";
+    if(!strstr(raw, "NOTICE") == 0 && strstr(raw, "PRIVMSG") == 0) return "NOTICE";
     return "NA";
 }
 
@@ -99,18 +99,73 @@ int received_id(char* line, int id) {
 void handle_privmsg(char* raw) {
     // printf("Handling this Private Message Line: %s\n", raw);
 
+    int building = 0;
+    char message_buffer[255] = {0};
+    size_t message_buffer_size = 0;
+
+    char* tag_str;
+    char* user_host_str;
+    char* source_str;
+
     char* token;
     char* result;
-    int count = 0;
+    int count = 0;    
 
-    for(token = strtok_r(raw, "", &result); token != 0; token = strtok_r(0, " ", &result)) {
-        
+    // Grab information for private message
+    for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
+        switch(count) {
+            // Tag
+            case 0:
+                asprintf(&tag_str, "%s", token);
+                break;
 
+            // Username & Fullname
+            case 1:
+                asprintf(&user_host_str, "%s", token);
+                break;
 
+            // Do nothing (irc_type)
+            case 2:
+                break;
+
+            // Source
+            case 3:
+                asprintf(&source_str, "%s", token);
+                break;
+
+            default:
+                if(!building) {
+                    building = 1;
+
+                    char token_copy[strlen(token) + 1];
+                    strcpy(token_copy, token);
+                    strcat(token_copy, " ");
+
+                    memcpy(message_buffer, token_copy, sizeof(token_copy));
+                    message_buffer_size += sizeof(token_copy);
+                } else {
+                    char token_copy[strlen(token) + 1];
+                    strcpy(token_copy, token);
+                    strcat(token_copy, " ");
+
+                    memcpy(message_buffer + message_buffer_size, token_copy, sizeof(token_copy));
+                    message_buffer_size += sizeof(token_copy);
+                }
+                break;
+        }
         count++;    
     }
+    
+    memmove(message_buffer, message_buffer + 1, strlen(message_buffer)); // Remove ":"
+    message_buffer[message_buffer_size - 1] = '\0';
+    printf("Got this: %s\n", message_buffer);
 }
 
+
+void handle_ping() {
+    mark(20);
+    send_raw("PONG :tmi.twitch.tv\r\n");
+}
 
 void handle(char* raw) {
     char* raw_copy = strdup(raw);
@@ -129,10 +184,33 @@ void handle(char* raw) {
 
     char* irc_type = irc_2_type(raw);
     printf("Received: %s\n", irc_type);
+    printf("< %s\n\n\n", raw);
 
     if(!strcmp("PRIVMSG", irc_type)) {
         handle_privmsg(raw);
-    }    
+    } else if(!strcmp("JOIN", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("PART", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("PING", irc_type)) {
+        handle_ping();
+    } else if(!strcmp("CAP", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("USERNOTICE", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("CLEARCHAT", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("CLEARMSG", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("HOSTTARGET", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("CTCP", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("RECONNECT", irc_type)) {
+        // handle_privmsg(raw);
+    } else if(!strcmp("NOTICE", irc_type)) {
+        // handle_privmsg(raw);
+    } 
 }
 
 void receive_full_chunk(int* more_flag) {
@@ -190,6 +268,11 @@ void* thread_start(void *vargs) {
         // Read in a stream of up to 512B
         if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
 
+            if(bytes_recv == -1) {
+                printf("Connection aborted\n");
+                break;
+            }
+
             // Check if our buffer ends with /r/n
             int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
             int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
@@ -197,7 +280,7 @@ void* thread_start(void *vargs) {
             // If it does not, dump the recv buffer into the full_buffer
             // and continue loading more data until /r/n
             if(!(newline_flag && carriage_flag)) {
-                memmove(full_buffer, recv_buffer, bytes_recv);
+                memmove(full_buffer, recv_buffer, bytes_recv * sizeof(char));
                 full_buffer_size += bytes_recv;
                 more_flag = 1;
 
@@ -206,7 +289,7 @@ void* thread_start(void *vargs) {
                 }
             } else {
                 // We have /r/n, copy the recv_buffer to the full_buffer
-                memmove(full_buffer, recv_buffer, bytes_recv);
+                memmove(full_buffer, recv_buffer, bytes_recv * sizeof(char));
             }
 
             // Add null termination 
@@ -216,7 +299,6 @@ void* thread_start(void *vargs) {
             char* token;
             char* result;
             for(token = strtok_r(full_buffer, "\r\n", &result); token != 0; token = strtok_r(0, "\r\n", &result)) {
-                printf("< %s\n", token);
                 handle(token);
             }
 
