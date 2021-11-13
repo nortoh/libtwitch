@@ -11,13 +11,13 @@
 #include "config.h"
 
 #define MAX_RECV_LEN 512 // 512B
-#define OVERFLOW_SIZE 1000 // 512B * 20 = 51.2KB
+#define FULL_BUFFER_MULTIPLE 1000 // 512B * 20 = 51.2KB
 
-static int sock = 0, running = 0, connected = 0, motd = 0, bufferptr = 0;
+static int sock = 0, running = 0, connected = 0, motd = 0, recv_bufferptr = 0;
 static struct sockaddr_in serv_addr;
-static size_t bytes_recv = 0, overflow_size = 0;
-static char buffer[MAX_RECV_LEN] = {0};
-static char overflow_buffer[OVERFLOW_SIZE * MAX_RECV_LEN];
+static size_t bytes_recv = 0, full_buffer_size = 0;
+static char recv_buffer[MAX_RECV_LEN] = {0};
+static char full_buffer[FULL_BUFFER_MULTIPLE * MAX_RECV_LEN];
 
 int send_raw(char* raw) {
     if(!sock) return -1;
@@ -28,7 +28,8 @@ int send_raw(char* raw) {
 
 char* irc_2_type(char* raw) {
     // printf("RAW LINE: %s\n", raw);
-    if(!strstr(raw, "PRIVMSG")) return "PRIVMSG";
+    // printf("%d\n", !(strstr(raw, "PRIVMSG") == 0));
+    if(!(strstr(raw, "PRIVMSG") == 0)) return "PRIVMSG";
     return "NA";
 }
 
@@ -89,6 +90,7 @@ void handle(char* raw) {
     // Checks
     if(!connected) { 
         connected = received_id(raw, 1);
+        send_raw("JOIN #xqcow\r\n");
     }
 
     if(!motd) {
@@ -97,6 +99,7 @@ void handle(char* raw) {
     } 
 
     char* irc_type = irc_2_type(raw);
+    printf("Received: %s\n", irc_type);
     // printf("%s\n", irc_type);
     // if(strcmp(irc_type, "PRIVMSG")) {
     //     printf("GOT PRIVMSG FOR %s\n", raw_copy);
@@ -110,29 +113,26 @@ void handle(char* raw) {
     // char* parts[10];
     // // printf("Building %s\n", raw);
     // for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
-    //     // printf("token: %s\n", token);
-
+    //     printf("token: %s\n", token);
     // }
     
 }
 
 void receive_full_chunk(int* more_flag) {
     
-    // Clear the buffer before reading in more
-    memset((void *) buffer, 0, MAX_RECV_LEN);
+    // Clear the recv_buffer before reading in more
+    memset((void *) recv_buffer, 0, MAX_RECV_LEN);
 
-    if((bytes_recv = recv(sock, buffer, MAX_RECV_LEN, 0)) > 0) {
-        int newline_flag = buffer[bytes_recv - 1] == '\n';
-        int carriage_flag = buffer[bytes_recv - 2] == '\r';
+    if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
+        int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
+        int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
 
-        // printf("[%p] Sticking %ld at %p\n", (void *) overflow_buffer, bytes_recv, (void *) overflow_buffer + overflow_size);
-        memmove(overflow_buffer + overflow_size, buffer, bytes_recv * sizeof(char));
-        overflow_size += bytes_recv;
+        memmove(full_buffer + full_buffer_size, recv_buffer, bytes_recv * sizeof(char));
+        full_buffer_size += bytes_recv;
 
         if(newline_flag && carriage_flag) {
             *more_flag = 0;
         }
-
     }
 
 }
@@ -159,111 +159,51 @@ void* thread_start(void *vargs) {
     send_raw("CAP REQ :twitch.tv/tags\r\n");
     send_raw("CAP REQ :twitch.tv/membership\r\n");
 
-    // send_raw("JOIN #s1mple\r\n");
-    // send_raw("JOIN #auronplay\r\n");
-    send_raw("JOIN #xqcow\r\n");
-
     if(connection < 0) {
         error(__FILE__, "Error calling conn()\n");
     }
 
     int more_flag = 0;
-    int cycles = 0;
 
-    // Clear buffer
-    memset(buffer, 0, MAX_RECV_LEN);
+    // Clear recv_buffer
+    memset(recv_buffer, 0, MAX_RECV_LEN);
 
     while(running) {
 
-        // Get some data
-        if((bytes_recv = recv(sock, buffer, MAX_RECV_LEN, 0)) > 0) {
+        if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
 
-            int newline_flag = buffer[bytes_recv - 1] == '\n';
-            int carriage_flag = buffer[bytes_recv - 2] == '\r';
-            // printf("[nl: %d, cr: %d, r: %d] %s", newline_flag, carriage_flag, !(newline_flag && carriage_flag), buffer);
-            // printf("\n\n");
+            int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
+            int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
 
             if(!(newline_flag && carriage_flag)) {
-                memmove(overflow_buffer, buffer, bytes_recv);
-                overflow_size += bytes_recv;
+                memmove(full_buffer, recv_buffer, bytes_recv);
+                full_buffer_size += bytes_recv;
                 more_flag = 1;
 
-                
                 while(more_flag) {
                     receive_full_chunk(&more_flag);
-                    cycles++;
                 }
-                overflow_buffer[overflow_size] = '\0';
 
-                overflow_size = 0;
-                cycles = 0;
+                full_buffer[full_buffer_size] = '\0';
+                full_buffer_size = 0;
             } else {
-                // Copy the buffer to the overflow buffer
-                memmove(overflow_buffer, buffer, bytes_recv);
+                // Copy the recv_buffer to the overflow recv_buffer
+                memmove(full_buffer, recv_buffer, bytes_recv);
             }
 
-            printf("%s\n", overflow_buffer);
+            char* token;
+            char* result;
+            for(token = strtok_r(full_buffer, "\r\n", &result); token != 0; token = strtok_r(0, "\r\n", &result)) {
+                printf("< %s\n", token);
+                handle(token);
+            }
+
+            // handle(full_buffer);
 
             // Clear memory when we are done
-            memset(overflow_buffer, 0, OVERFLOW_SIZE * MAX_RECV_LEN);
-            memset(buffer, 0, MAX_RECV_LEN);
+            memset(full_buffer, 0, FULL_BUFFER_MULTIPLE * MAX_RECV_LEN);
+            memset(recv_buffer, 0, MAX_RECV_LEN);
         }
-        /*
-
-        // Continously receive data from socket as long as we are not receive a buffer
-        // whose size - 2 & size - 1 characters do not respectively match \r\n.
-        do {
-            if((size_recv = recv(sock, chunk, MAX_RECV_LEN, 0)) > 0) {
-                if(size_recv == -1) {
-                    printf("Connection aborted");
-                    exit(1);
-                }
-
-                int newline_flag = chunk[size_recv - 1] == '\n';
-                int carriage_flag = chunk[size_recv - 2] == '\r';
-
-                // We did not detect /r/n at the end of the buffer
-                if(!(newline_flag && carriage_flag)) {
-                    printf("WE ARE GONNA SET MORE_FLAG = 1");
-                    // Copy buffer to overflow and clear chunk buffer
-                    memcpy((void *)overflow_buffer + overflow_size, chunk, sizeof(chunk) * sizeof(char) + 1);
-                    memset(chunk, 0, MAX_RECV_LEN);
-                    
-                    printf("@@@ CURRENT OVERFLOW @@@\n");
-                    printf("%s\n", overflow_buffer);
-                    printf("@@@@@@@@@@@@@@@@@@@@@@@@\n");
-
-                    overflow_size += size_recv;
-                    more_flag = 1;
-                } else {
-                // Detected /r/n at the end of the stream
-
-                    // If we were gathering more data
-                    if(more_flag) {
-                        // handle(overflow_buffer);
-                        overflow_buffer[overflow_size] = '\0';
-                        printf("$$$ FINAL OVERFLOW $$$\n");
-                        printf("%s\n", overflow_buffer);
-                        printf("$$$$$$$$$$$$$$$$$$$$$$\n");
-                    } else {
-                    // We were not gathering more data prior
-                        // memcpy((void *)overflow_buffer, chunk, sizeof(chunk) * sizeof(char));
-                        // overflow_buffer[size_recv] = '\0';
-                        // printf("^^^ FINAL CHUNK ^^^\n");
-                        // printf("%s\n", overflow_buffer);
-                        // printf("^^^^^^^^^^^^^^^^^^^\n");
-                        printf("Chunk: %s\n", chunk);
-                    }
-
-                    overflow_size = 0;
-                    more_flag = 0;
-                    memset(overflow_buffer, 0, OVERFLOW_SIZE * MAX_RECV_LEN);
-                    break;
-                }
-            }
-        } while(more_flag);
-
-        */
     }
 
     printf("Closing socket\n");
