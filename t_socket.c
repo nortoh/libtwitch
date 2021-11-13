@@ -30,7 +30,19 @@ int send_raw(char* raw) {
 char* irc_2_type(char* raw) {
     // printf("RAW LINE: %s\n", raw);
     // printf("%d\n", !(strstr(raw, "PRIVMSG") == 0));
-    if(!(strstr(raw, "PRIVMSG") == 0)) return "PRIVMSG";
+    if(!strstr(raw, "PRIVMSG") == 0) return "PRIVMSG";
+    if(!(strstr(raw, "JOIN") == 0) && strstr(raw, "PRIVMSG") == 0) return "JOIN";
+    if(!(strstr(raw, "PART") == 0) && strstr(raw, "PRIVMSG") == 0) return "PART";
+    if(!(strstr(raw, "CAP") == 0) && strstr(raw, "PRIVMSG") == 0) return "CAP";
+    if(!(strstr(raw, "USERNOTICE") == 0) && strstr(raw, "PRIVMSG") == 0) return "USERNOTICE";
+    if(!(strstr(raw, "ROOMSTATE") == 0) && strstr(raw, "PRIVMSG") == 0) return "ROOMSTATE";
+    if(!(strstr(raw, "USERSTATE") == 0) && strstr(raw, "PRIVMSG") == 0) return "USERSTATE";
+    if(!(strstr(raw, "CLEARCHAT") == 0) && strstr(raw, "PRIVMSG") == 0) return "CLEARCHAT";
+    if(!(strstr(raw, "CLEARMSG") == 0) && strstr(raw, "PRIVMSG") == 0) return "CLEARMSG";
+    if(!(strstr(raw, "HOSTTARGET") == 0) && strstr(raw, "PRIVMSG") == 0) return "HOSTTARGET";
+    if(!(strstr(raw, "CTCP") == 0) && strstr(raw, "PRIVMSG") == 0) return "CTCP";
+    if(!(strstr(raw, "RECONNECT") == 0) && strstr(raw, "PRIVMSG") == 0) return "RECONNECT";
+    if(!(strstr(raw, "NOTICE") == 0) && strstr(raw, "PRIVMSG") == 0) return "NOTICE";
     return "NA";
 }
 
@@ -116,7 +128,7 @@ void handle(char* raw) {
     } 
 
     char* irc_type = irc_2_type(raw);
-    // printf("Received: %s\n", irc_type);
+    printf("Received: %s\n", irc_type);
 
     if(!strcmp("PRIVMSG", irc_type)) {
         handle_privmsg(raw);
