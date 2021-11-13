@@ -83,6 +83,21 @@ int received_id(char* line, int id) {
     return received_id == id;
 }
 
+void handle_privmsg(char* raw) {
+    printf("Handling this Private Message Line: %s\n", raw);
+
+    char* token;
+    char* result;
+    int count = 0;
+
+    for(token = strtok_r(raw, "", &result); token != 0; token = strtok_r(0, " ", &result)) {
+        
+
+
+        count++;    
+    }
+}
+
 
 void handle(char* raw) {
     char* raw_copy = strdup(raw);
@@ -100,6 +115,11 @@ void handle(char* raw) {
 
     char* irc_type = irc_2_type(raw);
     printf("Received: %s\n", irc_type);
+
+    if(!strcmp("PRIVMSG", irc_type)) {
+        handle_privmsg(raw);
+    }
+
     // printf("%s\n", irc_type);
     // if(strcmp(irc_type, "PRIVMSG")) {
     //     printf("GOT PRIVMSG FOR %s\n", raw_copy);
@@ -183,13 +203,13 @@ void* thread_start(void *vargs) {
                 while(more_flag) {
                     receive_full_chunk(&more_flag);
                 }
-
-                full_buffer[full_buffer_size] = '\0';
-                full_buffer_size = 0;
             } else {
                 // Copy the recv_buffer to the overflow recv_buffer
                 memmove(full_buffer, recv_buffer, bytes_recv);
             }
+            
+            full_buffer[full_buffer_size] = '\0';
+            full_buffer_size = 0;
 
             char* token;
             char* result;
