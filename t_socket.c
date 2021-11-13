@@ -141,7 +141,7 @@ void handle(char* raw) {
 void receive_full_chunk(int* more_flag) {
     
     // Clear the recv_buffer before reading in more
-    memset((void *) recv_buffer, 0, MAX_RECV_LEN);
+    memset(recv_buffer, 0, MAX_RECV_LEN);
 
     if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
         int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
@@ -190,11 +190,17 @@ void* thread_start(void *vargs) {
 
     while(running) {
 
+        /*
+        Read in a stream of up to 512B
+        */
         if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
 
+            // Check if our buffer ends with /r/n
             int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
             int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
 
+            // If it does not, dump the recv_buffer into the full buffer
+            // and continue loading more data until /r/n
             if(!(newline_flag && carriage_flag)) {
                 memmove(full_buffer, recv_buffer, bytes_recv);
                 full_buffer_size += bytes_recv;
@@ -204,10 +210,11 @@ void* thread_start(void *vargs) {
                     receive_full_chunk(&more_flag);
                 }
             } else {
-                // Copy the recv_buffer to the overflow recv_buffer
+                // We have /r/n, copy the recv_buffer to the full_buffer
                 memmove(full_buffer, recv_buffer, bytes_recv);
             }
-            
+
+            // Add null termination 
             full_buffer[full_buffer_size] = '\0';
             full_buffer_size = 0;
 
@@ -217,8 +224,6 @@ void* thread_start(void *vargs) {
                 printf("< %s\n", token);
                 handle(token);
             }
-
-            // handle(full_buffer);
 
             // Clear memory when we are done
             memset(full_buffer, 0, FULL_BUFFER_MULTIPLE * MAX_RECV_LEN);
