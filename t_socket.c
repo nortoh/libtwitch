@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "config.h"
+#include "irc_message.h"
 
 #define MAX_RECV_LEN 512 // 512B
 #define FULL_BUFFER_MULTIPLE 1000 // 512B * 20 = 51.2KB
@@ -84,7 +85,7 @@ int received_id(char* line, int id) {
 }
 
 void handle_privmsg(char* raw) {
-    printf("Handling this Private Message Line: %s\n", raw);
+    // printf("Handling this Private Message Line: %s\n", raw);
 
     char* token;
     char* result;
@@ -106,6 +107,7 @@ void handle(char* raw) {
     if(!connected) { 
         connected = received_id(raw, 1);
         send_raw("JOIN #xqcow\r\n");
+        send_raw("JOIN #illojuan\r\n");
     }
 
     if(!motd) {
@@ -114,28 +116,11 @@ void handle(char* raw) {
     } 
 
     char* irc_type = irc_2_type(raw);
-    printf("Received: %s\n", irc_type);
+    // printf("Received: %s\n", irc_type);
 
     if(!strcmp("PRIVMSG", irc_type)) {
         handle_privmsg(raw);
-    }
-
-    // printf("%s\n", irc_type);
-    // if(strcmp(irc_type, "PRIVMSG")) {
-    //     printf("GOT PRIVMSG FOR %s\n", raw_copy);
-    // }
-
-    // return;
-
-    // Simple tokenizer
-    // char* token;
-    // char* result;
-    // char* parts[10];
-    // // printf("Building %s\n", raw);
-    // for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
-    //     printf("token: %s\n", token);
-    // }
-    
+    }    
 }
 
 void receive_full_chunk(int* more_flag) {
@@ -190,16 +175,14 @@ void* thread_start(void *vargs) {
 
     while(running) {
 
-        /*
-        Read in a stream of up to 512B
-        */
+        // Read in a stream of up to 512B
         if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
 
             // Check if our buffer ends with /r/n
             int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
             int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
 
-            // If it does not, dump the recv_buffer into the full buffer
+            // If it does not, dump the recv buffer into the full_buffer
             // and continue loading more data until /r/n
             if(!(newline_flag && carriage_flag)) {
                 memmove(full_buffer, recv_buffer, bytes_recv);
