@@ -6,8 +6,8 @@
 
 static struct tag_t* head = 0;
 
-void print_tag(struct tag_t* tag) {
-    struct tag_t* curr = tag;
+void print_tag_header(struct tag_header_t* header) {
+    struct tag_t* curr = header->tags;
 
     while(curr) {
         printf("[%p:%p] %s = %s\n", (void *) curr, (void *) curr->next, curr->key, curr->value);
@@ -17,9 +17,11 @@ void print_tag(struct tag_t* tag) {
 
 void free_tag_header(struct tag_header_t* header) {
     struct tag_t* curr = header->tags;
+    
+    // if(header->badges) free_badges(header->badges);
+
     while(curr) {
         struct tag_t* tmp = curr;
-        if(header->badges) free_badges(header->badges);
         curr = curr->next;
         free(tmp);
         printf("Freeing tag %p\n", (void *) tmp);
@@ -65,7 +67,7 @@ void disassemble_tag(struct tag_header_t* header, char* raw) {
             strcpy(value, "0");
         }
 
-        struct tag_t* next = create_pair(key, value);
+        struct tag_t* next = create_tag_pair(key, value);
         
         if(!strcmp(key, "badges") && strcmp(value, "0")) {
             struct badge_t* badges = disassemble_badge(value);
@@ -82,12 +84,12 @@ void disassemble_tag(struct tag_header_t* header, char* raw) {
         }
     }
     header->tags = head;
-    print_tag(head);
-    free_tags(head);
+    print_tag_header(header);
+    free_tag_header(header);
     printf("======================\n");
 }
 
-struct tag_t* create_pair(char* key, char* value) {
+struct tag_t* create_tag_pair(char* key, char* value) {
     struct tag_t* tag = malloc(sizeof(struct tag_t));
     strcpy(tag->key, key);
     strcpy(tag->value, value);
