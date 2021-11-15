@@ -17,7 +17,7 @@ extern void remove_channel(char* name);
 
 extern int destroy_channel(char* name);
 
-void remove_users(char* name);
+void remove_users(struct channel_t* channel);
 
 extern int has_channel(char* name);
 

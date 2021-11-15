@@ -1,6 +1,5 @@
 #ifndef __T_SOCKET_H__
 extern int connect_to_twitch();
-
 void handle(char* raw);
 char* irc_2_type(char* raw);
 int send_raw(char* raw);
