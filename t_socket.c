@@ -10,6 +10,8 @@
 #include "utils.h"
 #include "config.h"
 #include "irc_message.h"
+#include "message.h"
+#include "channel.h"
 
 #define MAX_RECV_LEN 512 // 512B
 #define FULL_BUFFER_MULTIPLE 1000 // 512B * 20 = 51.2KB
@@ -46,6 +48,20 @@ char* irc_2_type(char* raw) {
     return "NA";
 }
 
+void join_channel(char* channel) {
+    char* buffer;
+    asprintf(&buffer, "JOIN %s\r\n", channel);
+    add_channel(channel);
+    send_raw(buffer);
+}
+
+void part_channel(char* channel) {
+    char* buffer;
+    asprintf(&buffer, "PART %s\r\n", channel);
+    destroy_channel(channel);
+    send_raw(buffer);
+}
+
 int conn(char* host, int port) {
 
     // Initalize socket
@@ -56,21 +72,21 @@ int conn(char* host, int port) {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(port);
 
-    info(__FILE__, "Created socket\n");
+    printf("Created socket\n");
     
     // Convert IP to binary form
     if(inet_pton(AF_INET, host, &serv_addr.sin_addr) <= 0) {
-        info(__FILE__, "Failed to convert IP to binary form\n");
+        printf("Failed to convert IP to binary form\n");
         return -1;
     }
 
     // Connect socket to host
     if(connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-        info(__FILE__, "Connection failed\n");
+        printf("Connection failed\n");
         return -1;
     }
 
-    info(__FILE__, "Connected!\n");
+    printf("Connected!\n");
 
     return 1;
 }
@@ -91,63 +107,157 @@ int received_id(char* line, int id) {
         received_id = atoi(token);
         break;    
     }
-    // printf("%s\n", copy);
     free(copy);
     return received_id == id;
 }
 
-void handle_privmsg(char* raw) {
-    // printf("Handling this Private Message Line: %s\n", raw);
+char* get_username_from_host(char* line) {
+    char* username_result;
+    char* username = strtok_r(line, "!", &username_result);
+    memmove(username, username + 1, strlen(username));
+    return username;
+}
 
+void handle_cap() {
+    // printf("Received good ACK\n");
+}
+
+void handle_join(char* raw) {
+    char* token;
+    char* result;
+
+    char username_str[30];
+    char channel_str[30];
+
+    int count = 0;
+    for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
+        switch(count) {
+
+            // Username and Host
+            case 0:
+                sprintf(username_str, "%s", get_username_from_host(token));
+                break;
+            
+            // Do nothing
+            case 1:
+            
+                break;
+            
+            // Channel
+            case 2:
+                sprintf(channel_str, "%s", token);
+                break;
+        }
+        count++;
+    }
+
+    if(!strcmp(username_str, get_config_value("username"))) return;
+
+    struct channel_t* channel = get_channel(channel_str);
+    struct user_t* user = get_user(channel, username_str);
+
+    if(!user) {
+        printf("ADDING FROM JOIN %s:%s\n", channel_str, username_str);
+        add_user(channel, username_str);
+    }
+}
+
+void handle_part(char* raw) {
+    char* token;
+    char* result;
+
+    char username_str[30];
+    char channel_str[30];
+
+    int count = 0;
+    for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
+        switch(count) {
+
+            // Username and Host
+            case 0:
+                sprintf(username_str, "%s", get_username_from_host(token));
+                break;
+            
+            // Do nothing
+            case 1:
+            
+                break;
+            
+            // Channel
+            case 2:
+                sprintf(channel_str, "%s", token);
+                break;
+        }
+        count++;
+    }
+
+    if(!strcmp(username_str, get_config_value("username"))) return;
+
+    struct channel_t* channel = get_channel(channel_str);
+    struct user_t* user = get_user(channel, username_str);
+
+    if(user) {
+        printf("REMOVING FROM PART %s:%s\n", channel_str, username_str);
+        remove_user(channel, user);
+    }
+}
+
+void handle_privmsg(char* raw) {
     int building = 0;
-    char message_buffer[255] = {0};
+    char message_buffer[2048] = {0}; // 2KB
     size_t message_buffer_size = 0;
 
-    char* tag_str;
-    char* user_host_str;
-    char* source_str;
+    char tag_str[256];
+    char username_str[30];
+    char channel_str[30];
 
     char* token;
     char* result;
     int count = 0;    
+    
+    char* username_result;
 
     // Grab information for private message
     for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
         switch(count) {
             // Tag
             case 0:
-                asprintf(&tag_str, "%s", token);
+                sprintf(tag_str, "%s", token);
                 break;
 
-            // Username & Fullname
+            // Sender
             case 1:
-                asprintf(&user_host_str, "%s", token);
+                sprintf(username_str, "%s", get_username_from_host(token));
                 break;
 
             // Do nothing (irc_type)
             case 2:
                 break;
 
-            // Source
+            // Channel
             case 3:
-                asprintf(&source_str, "%s", token);
+                sprintf(channel_str, "%s", token);
                 break;
 
             default:
                 if(!building) {
                     building = 1;
 
-                    char token_copy[strlen(token) + 1];
+                    // Create a copy and add a space
+                    char token_copy[strlen(token) + 1];     // + 1 for additional space
                     strcpy(token_copy, token);
                     strcat(token_copy, " ");
 
+                    // Copy over first word into message buffer
                     memcpy(message_buffer, token_copy, sizeof(token_copy));
                     message_buffer_size += sizeof(token_copy);
                 } else {
+                    // Create a copy and add a space
                     char token_copy[strlen(token) + 1];
                     strcpy(token_copy, token);
                     strcat(token_copy, " ");
 
+                    // Copy over any additional words into message buffer
                     memcpy(message_buffer + message_buffer_size, token_copy, sizeof(token_copy));
                     message_buffer_size += sizeof(token_copy);
                 }
@@ -156,9 +266,20 @@ void handle_privmsg(char* raw) {
         count++;    
     }
     
-    memmove(message_buffer, message_buffer + 1, strlen(message_buffer)); // Remove ":"
+    memmove(message_buffer, message_buffer + 1, strlen(message_buffer));    // Remove ":"
     message_buffer[message_buffer_size - 1] = '\0';
-    printf("Got this: %s\n", message_buffer);
+
+    struct channel_t* channel = get_channel(channel_str);
+    struct user_t* sender = get_user(channel, username_str);
+
+    if(!sender) sender = add_user(channel, username_str);
+    struct message_t message_block = create_message(channel, sender, message_buffer);
+    print_message_block(&message_block);
+
+    // Clear buffers
+    memset(username_str, 0, sizeof(username_str));
+    memset(message_buffer, 0, sizeof(message_buffer));
+
 }
 
 
@@ -173,8 +294,10 @@ void handle(char* raw) {
     // Checks
     if(!connected) { 
         connected = received_id(raw, 1);
-        send_raw("JOIN #xqcow\r\n");
-        send_raw("JOIN #illojuan\r\n");
+        // join_channel("#xqcow");
+        join_channel("#illojuan");
+        join_channel("#oozebrood");
+        join_channel("#apoinsettia");
     }
 
     if(!motd) {
@@ -183,19 +306,20 @@ void handle(char* raw) {
     } 
 
     char* irc_type = irc_2_type(raw);
-    printf("Received: %s\n", irc_type);
-    printf("< %s\n\n\n", raw);
+    // printf("Received: %s\n", irc_type);
+    // printf("< %s\n", raw);
 
     if(!strcmp("PRIVMSG", irc_type)) {
         handle_privmsg(raw);
     } else if(!strcmp("JOIN", irc_type)) {
-        // handle_privmsg(raw);
+        handle_join(raw);
+        // printf("< %s\n\n\n", raw);
     } else if(!strcmp("PART", irc_type)) {
-        // handle_privmsg(raw);
+        handle_part(raw);
     } else if(!strcmp("PING", irc_type)) {
         handle_ping();
     } else if(!strcmp("CAP", irc_type)) {
-        // handle_privmsg(raw);
+        handle_cap();
     } else if(!strcmp("USERNOTICE", irc_type)) {
         // handle_privmsg(raw);
     } else if(!strcmp("CLEARCHAT", irc_type)) {
@@ -210,15 +334,15 @@ void handle(char* raw) {
         // handle_privmsg(raw);
     } else if(!strcmp("NOTICE", irc_type)) {
         // handle_privmsg(raw);
-    } 
+    }
 }
 
 void receive_full_chunk(int* more_flag) {
     
     // Clear the recv_buffer before reading in more
-    memset(recv_buffer, 0, MAX_RECV_LEN);
+    memset(recv_buffer, 0, sizeof(recv_buffer));
 
-    if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
+    if((bytes_recv = recv(sock, recv_buffer, sizeof(recv_buffer), 0)) > 0) {
         int newline_flag = recv_buffer[bytes_recv - 1] == '\n';
         int carriage_flag = recv_buffer[bytes_recv - 2] == '\r';
 
@@ -229,7 +353,6 @@ void receive_full_chunk(int* more_flag) {
             *more_flag = 0;
         }
     }
-
 }
 
 void* thread_start(void *vargs) {
@@ -255,20 +378,22 @@ void* thread_start(void *vargs) {
     send_raw("CAP REQ :twitch.tv/membership\r\n");
 
     if(connection < 0) {
-        error(__FILE__, "Error calling conn()\n");
+        printf("Error calling conn()\n");
     }
 
     int more_flag = 0;
 
     // Clear recv_buffer
-    memset(recv_buffer, 0, MAX_RECV_LEN);
+    memset(recv_buffer, 0, sizeof(recv_buffer));
+
+    sleep(1);
 
     while(running) {
 
         // Read in a stream of up to 512B
-        if((bytes_recv = recv(sock, recv_buffer, MAX_RECV_LEN, 0)) > 0) {
+        if((bytes_recv = recv(sock, recv_buffer, sizeof(recv_buffer), 0)) > 0) {
 
-            if(bytes_recv == -1) {
+            if(bytes_recv <= 0) {
                 printf("Connection aborted\n");
                 break;
             }
@@ -293,7 +418,7 @@ void* thread_start(void *vargs) {
             }
 
             // Add null termination 
-            full_buffer[full_buffer_size] = '\0';
+            full_buffer[full_buffer_size - 1] = '\0';
             full_buffer_size = 0;
 
             char* token;
@@ -301,10 +426,10 @@ void* thread_start(void *vargs) {
             for(token = strtok_r(full_buffer, "\r\n", &result); token != 0; token = strtok_r(0, "\r\n", &result)) {
                 handle(token);
             }
-
+            
             // Clear memory when we are done
-            memset(full_buffer, 0, FULL_BUFFER_MULTIPLE * MAX_RECV_LEN);
-            memset(recv_buffer, 0, MAX_RECV_LEN);
+            memset(full_buffer, 0, sizeof(full_buffer));
+            memset(recv_buffer, 0, sizeof(recv_buffer));
         }
     }
 
@@ -324,9 +449,9 @@ int connect_to_twitch() {
 
     running = 1;
 
-    info(__FILE__, "Creating socket thread\n");
+    printf("Creating socket thread\n");
     if(pthread_create(&socket_thread, 0, thread_start, 0) != 0) {
-        error(__FILE__, "Could not create socket thread!!!\n");
+        printf("Could not create socket thread!!!\n");
         return 0;
     }
 

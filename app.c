@@ -16,20 +16,32 @@ int main(int argc, char **argv) {
 
     // Testing
     struct bot_t* bot = create_bot("bot");
+    
+    // add_channel("#nortoh");
+    // struct channel_t* nortoh_chan = get_channel("#nortoh");
 
-    add_channel("#main");
-    add_channel("#nortoh");
-    add_user("#nortoh", "nortoh");
-    add_user("#nortoh", "cora");
-    add_user("#main", "nortoh");
-    add_user("#main", "oozebrood");
-    add_user("#main", "matthew");
-    add_user("#main", "kyle");
-    list_users("#main");
-    list_users("#nortoh");
+    // struct user_t* nortoh_user = get_user(nortoh_chan, "nortoh");
+    // if(nortoh_user == 0) {
+    //     printf("We did not find nortoh in #nortoh\n");
+    // }
 
-    struct user_t* nortoh_user = get_user("#nortoh", "nortoh");
-    printf("Got %s\n", nortoh_user->display_name);
+    // add_user(nortoh_chan, "nortoh");
+    // add_user(nortoh_chan, "oozebrood");
+    // add_user(nortoh_chan, "cora");
+
+    // nortoh_user = get_user(nortoh_chan, "nortoh");
+
+    // if(nortoh_user != 0) {
+    //     printf("We found nortoh in #nortoh\n");
+    // } else {
+    //     printf("Still not found\n");
+    // }
+    
+    // list_users(nortoh_chan);
+
+
+    // struct user_t* nortoh_user = get_user("#nortoh", "nortoh");
+    // printf("Got %s\n", nortoh_user->display_name);
 
     // This works
     connect_to_twitch();

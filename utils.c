@@ -22,3 +22,9 @@ void trim_whitespaces(char* data) {
         }
     }
 }
+
+void mark(int n) {
+    for(int i = 0; i < n; i++) {
+        printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");
+    }
+}
