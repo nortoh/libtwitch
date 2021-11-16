@@ -34,6 +34,20 @@ struct tag_header_t* create_tag(char* raw) {
     return header;
 }
 
+void destroy_tag_header(struct tag_header_t* header) {
+    if(!header) return;
+
+    struct tag_t* curr = header->tags;
+
+    while(curr) {
+        struct tag_t* tmp = curr;
+        curr = curr->next;
+        free(tmp);
+    }
+
+    free(header);
+}
+
 void disassemble_tag(struct tag_header_t* header, char* raw) {
     char tag_str[1024];
     strcpy(tag_str, raw); 

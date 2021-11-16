@@ -1,0 +1,12 @@
+Loaded configuration
+Driver class
+Connecting as (thetwitchcrawler)
+Creating socket thread
+Created socket
+Connected!
+> Sending PASS oauth:hx95ccnd06l0z0kyqhuss7chzdomzj
+> Sending NICK thetwitchcrawler
+> Sending USER thetwitchcrawler
+> Sending CAP REQ :twitch.tv/commands
+> Sending CAP REQ :twitch.tv/tags
+> Sending CAP REQ :twitch.tv/membership
