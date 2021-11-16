@@ -1,5 +1,5 @@
-#ifndef __T_BADGE_H__
-#define __T_BADGE_H__
+#ifndef __BADGE_H__
+#define __BADGE_H__
 struct badge_t {
     char key[50];
     char value[50];
