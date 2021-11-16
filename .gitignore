@@ -4,4 +4,4 @@ notes.txt
 
 #VSCode
 settings.json
-valgrind.log
+*.log

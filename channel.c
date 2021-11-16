@@ -4,16 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "user.h"
-
-struct channel_t {
-    char* name;
-    struct user_t* users;
-    struct channel_t* next;
-};
+#include "channel.h"
 
 static struct channel_t *head = 0;
 static int size = 0;
-
 
 void list_channels() {
     struct channel_t* curr = head;
@@ -35,14 +29,14 @@ int has_channel(char* name) {
         }
         curr = curr->next;
     }
-
     return 0;
 }
 
 struct channel_t* create_channel(char* name) {
+    
     struct channel_t* channel = malloc(sizeof(struct channel_t));
     asprintf(&channel->name, "%s", name);
-    channel->users = 0;
+    // channel->users = 0;
     channel->next = 0;
     
     return channel;
@@ -95,19 +89,19 @@ struct channel_t* get_channel(char *name) {
     return 0;
 }
 
-void remove_users(struct channel_t* channel) {
+// void remove_users(struct channel_t* channel) {
 
-    // Channel does not exist
-    if(!channel) return;
+//     // Channel does not exist
+//     if(!channel) return;
 
-    struct user_t* curr = channel->users;
+//     struct user_t* curr = channel->users;
 
-    while(curr) {
-        struct user_t* tmp = curr;
-        curr = curr->next;
-        free(tmp);
-    }
-}
+//     while(curr) {
+//         struct user_t* tmp = curr;
+//         curr = curr->next;
+//         free(tmp);
+//     }
+// }
 
 int destroy_channel(char* name) {
 
@@ -116,81 +110,81 @@ int destroy_channel(char* name) {
 
     struct channel_t* channel = get_channel(name);
 
-    remove_users(channel);
+    // remove_users(channel);
     remove_channel(name);
     free(channel->name);
     free(channel);
     return 1;
 }
 
-void list_users(struct channel_t* channel) {
-    struct user_t* curr = channel->users;
+// void list_users(struct channel_t* channel) {
+//     struct user_t* curr = channel->users;
 
-    int cycle = 0;
-    while(curr) {
-        print_user(curr);
-        curr = curr->next;
-        cycle++;
-    }
+//     int cycle = 0;
+//     while(curr) {
+//         print_user(curr);
+//         curr = curr->next;
+//         cycle++;
+//     }
 
-}
+// }
 
-int has_user(char* channel_name, char* username) {
-    struct channel_t* channel = get_channel(channel_name);
-    struct user_t* curr = channel->users;
+// int has_user(char* channel_name, char* username) {
+//     struct channel_t* channel = get_channel(channel_name);
+//     struct user_t* curr = channel->users;
 
-    while(curr) {
-        if(strcmp(curr->name, username) == 0) { 
-            return 1; 
-        } 
-        curr = curr->next;
-    }
+//     while(curr) {
+//         if(strcmp(curr->name, username) == 0) { 
+//             return 1; 
+//         } 
+//         curr = curr->next;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-void remove_user(struct channel_t* channel, struct user_t* user) {
-    struct user_t* curr = channel->users;
+// void remove_user(struct channel_t* channel, struct user_t* user) {
+//     struct user_t* curr = channel->users;
 
-    if(!strcmp(curr->name, user->name)) {
-        struct user_t* tmp = curr;
-        head = head->next;
-        free(tmp->name);
-        free(tmp);
-        return;
-    }
+//     if(!strcmp(curr->name, user->name)) {
+//         struct user_t* tmp = curr;
+//         head = head->next;
+//         free(tmp->name);
+//         free(tmp);
+//         return;
+//     }
     
-    struct user_t* prev = 0;
-    while(curr) {
+//     struct user_t* prev = 0;
+//     while(curr) {
 
-        if(!strcmp(curr->name, user->name)) {
-            prev->next = curr->next;
-            free(curr->name);
-            free(curr);
-            break;
-        }
+//         if(!strcmp(curr->name, user->name)) {
+//             prev->next = curr->next;
+//             free(curr->name);
+//             free(curr);
+//             break;
+//         }
 
-        prev = curr;
-        curr = curr->next;
-    }
-}
+//         prev = curr;
+//         curr = curr->next;
+//     }
+// }
 
-struct user_t* get_user(struct channel_t* channel, char* username) {;
-    struct user_t* user = channel->users;
-    if(!user) return 0;
+// struct user_t* get_user(struct channel_t* channel, char* username) {;
+//     struct user_t* user = channel->users;
+//     if(!user) return 0;
 
-    while(user) {
-        int found = strcmp(user->name, username) == 0;        
-        if(found) return user;
-        user = user->next;
-    }
+//     while(user) {
+//         int found = strcmp(user->name, username) == 0;        
+//         if(found) return user;
+//         user = user->next;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
-struct user_t* add_user(struct channel_t* channel, char* username) {
-    struct user_t* user = create_user(username, username);
-    user->next = channel->users;
-    channel->users = user;
-    return user;
-}
+// struct user_t* add_user(struct channel_t* channel, char* username) {
+//     struct user_t* user = create_user(username, username);
+//     user->next = channel->users;
+//     channel->users = user;
+//     return user;
+// }

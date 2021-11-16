@@ -7,6 +7,10 @@ while getopts "vl" o; do
         v) 
             USE_VALGRIND=1
             ;;
+        l)
+            USE_LOGGING=1
+            LOG_FILE=$OPTARG
+            ;;
 
     esac
 done
@@ -16,6 +20,12 @@ make clean 1> /dev/null
 
 echo "Making"
 make 1> /dev/null
+
+
+if [[ $USE_LOGGING == 1 ]]; then
+    echo "Using logging to $LOG_FILE"
+fi
+
 
 if [[ $USE_VALGRIND == 1 ]]; then
     echo "Running with valgrind"

@@ -1,11 +1,11 @@
 #ifndef __CHANNEL_H__
 #define __CHANNEL_H__
+
 struct channel_t {
     char* name;
-    char* chan_name;
-    struct user_t* users;
     struct channel_t* next;
 };
+
 struct channel_t* create_channel(char* name);
 extern void list_channels();
 extern struct channel_t* get_channel(char* name);

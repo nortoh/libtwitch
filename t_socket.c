@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "config.h"
 #include "irc_message.h"
+#include "user.h"
 #include "message.h"
 #include "channel.h"
 #include "tag.h"
@@ -157,9 +158,9 @@ void handle_join(char* raw) {
     if(!strcmp(username_str, get_config_value("username"))) return;
 
     struct channel_t* channel = get_channel(channel_str);
-    struct user_t* user = get_user(channel, username_str);
-
-    if(!user) add_user(channel, username_str);
+    struct user_t* user = create_user(channel, username_str);
+    printf("User %s has joined %s\n", user->name, user->channel->name);
+    free(user);
 }
 
 void handle_part(char* raw) {
@@ -193,9 +194,9 @@ void handle_part(char* raw) {
     if(!strcmp(username_str, get_config_value("username"))) return;
 
     struct channel_t* channel = get_channel(channel_str);
-    struct user_t* user = get_user(channel, username_str);
-
-    if(user) remove_user(channel, user);
+    struct user_t* user = create_user(channel, username_str);
+    printf("User %s has parted from %s\n", user->name, user->channel->name);
+    free(user);
 }
 
 void handle_privmsg(char* raw) {
@@ -217,7 +218,7 @@ void handle_privmsg(char* raw) {
             // Tag
             case 0:
                 sprintf(tag_str, "%s", token);
-                struct tag_header_t* tag = create_tag(tag_str);
+                // struct tag_header_t* tag = create_tag(tag_str);
                 break;
 
             // Sender
@@ -265,15 +266,15 @@ void handle_privmsg(char* raw) {
     message_buffer[message_buffer_size - 1] = '\0';
 
     struct channel_t* channel = get_channel(channel_str);
-    struct user_t* sender = get_user(channel, username_str);
+    struct user_t* sender = create_user(channel, username_str);
     
     // If we do not free these users eventually, we will fill up our heap!!!
-    if(!sender) sender = add_user(channel, username_str);
     struct message_t message_block = create_message(channel, sender, message_buffer);
-    // print_message_block(&message_block);
+    print_message_block(&message_block);
 
     // Clear buffers
     memset(message_buffer, 0, sizeof(message_buffer));
+    free(sender);
 }
 
 void handle_usernotice(char* raw) {
@@ -295,7 +296,7 @@ void handle_clearchat(char* raw) {
             // Tag
             case 0:
                 sprintf(tag_str, "%s", token);
-                struct tag_header_t* tag = create_tag(tag_str);
+                // struct tag_header_t* tag = create_tag(tag_str);
                 break;
 
             // Sender
