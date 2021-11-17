@@ -15,14 +15,14 @@
 #include "channel.h"
 #include "tag.h"
 
-#define MAX_RECV_LEN 512 // 512B
-#define FULL_BUFFER_MULTIPLE 2 * 50 // 50KB
+#define MAX_RECV_SIZE 512 // 512B
+#define FULL_BUFFER_SIZE 2 * 50 // 50KB
 
 static int sock = 0, running = 0, connected = 0, motd = 0;
 static struct sockaddr_in serv_addr;
 static size_t bytes_recv = 0, full_buffer_size = 0;
-static char recv_buffer[MAX_RECV_LEN] = {0};
-static char full_buffer[FULL_BUFFER_MULTIPLE * MAX_RECV_LEN];
+static char recv_buffer[MAX_RECV_SIZE] = {0};
+static char full_buffer[FULL_BUFFER_SIZE * MAX_RECV_SIZE];
 
 int send_raw(char* raw) {
     if(!sock) return -1;
@@ -163,7 +163,8 @@ void handle_join(char* raw) {
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* user = create_user(channel, username_str);
-    printf("%sUser %s has joined%s %s\n", BLU, user->name, RESET, user->channel->name);
+    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " GRN "Joined\n", channel_str, username_str);
+    // printf("%sUser %s has joined%s %s\n", BLU, user->name, RESET, user->channel->name);
     free(user);
 }
 
@@ -199,7 +200,7 @@ void handle_part(char* raw) {
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* user = create_user(channel, username_str);
-    printf("User %s has parted from %s\n", user->name, user->channel->name);
+    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " RED "Parted\n", channel_str, username_str);
     free(user);
 }
 
@@ -352,6 +353,7 @@ void handle(char* raw) {
         join_channel("#elweroking");
         join_channel("#casimito");
         join_channel("#loltyler1");
+        join_channel("#montanablack88");
     }
 
     if(!motd) {
