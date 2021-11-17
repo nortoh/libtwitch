@@ -3,6 +3,7 @@
 struct channel_t {
     char name[30];
     struct channel_t* next;
+    
 };
 struct channel_t* create_channel(char* name);
 extern void list_channels();

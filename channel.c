@@ -80,7 +80,6 @@ struct channel_t* get_channel(char* name) {
 
 int destroy_channel(struct channel_t* channel) {
     remove_channel(channel);
-    free(channel->name);
     free(channel);
     return 1;
 }
@@ -96,5 +95,5 @@ void destroy_channels() {
         size++;
     }
 
-    printf("%sDestoyed %d channels%s\n", RED, size, RESET);
+    printf(RED "Destroyed %d channels\n" RESET, size);
 }
