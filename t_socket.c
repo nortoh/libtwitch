@@ -26,9 +26,8 @@ static char full_buffer[FULL_BUFFER_MULTIPLE * MAX_RECV_LEN];
 
 int send_raw(char* raw) {
     if(!sock) return -1;
-    printf("> Sending %s", raw);
+    printf("%s>%s Sending %s", GRN, RESET, raw);
     return send(sock, raw, strlen(raw), 0);
-    
 }
 
 char* irc_2_type(char* raw) {
@@ -51,19 +50,24 @@ char* irc_2_type(char* raw) {
 }
 
 void join_channel(char* channel) {
-    char* buffer;
-    asprintf(&buffer, "JOIN %s\r\n", channel);
+    char buffer[1024];
+    sprintf(buffer, "JOIN %s\r\n", channel);
     add_channel(channel);
     send_raw(buffer);
-    free(buffer);
 }
 
-void part_channel(char* channel) {
-    char* buffer;
-    asprintf(&buffer, "PART %s\r\n", channel);
+void part_channel(char* name) {
+    char buffer[1024];
+    struct channel_t* channel = get_channel(name);
+    sprintf(buffer, "PART %s\r\n", name);
     destroy_channel(channel);
     send_raw(buffer);
-    free(buffer);
+}
+
+void send_channel_message(struct channel_t* channel, char message[500]) {
+    char buffer[1024];
+    sprintf(buffer, "PRIVMSG %s : %s\t\n", channel->name, message);
+    send_raw(buffer);
 }
 
 int conn(char* host, int port) {
@@ -159,7 +163,7 @@ void handle_join(char* raw) {
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* user = create_user(channel, username_str);
-    printf("User %s has joined %s\n", user->name, user->channel->name);
+    printf("%sUser %s has joined%s %s\n", BLU, user->name, RESET, user->channel->name);
     free(user);
 }
 
@@ -212,13 +216,15 @@ void handle_privmsg(char* raw) {
     char* result;
     int count = 0;    
     
+    struct tag_header_t* tag_header = 0;
+
     // Grab information for private message
     for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
         switch(count) {
             // Tag
             case 0:
                 sprintf(tag_str, "%s", token);
-                // struct tag_header_t* tag = create_tag(tag_str);
+                // tag_header = create_tag(tag_str);
                 break;
 
             // Sender
@@ -272,13 +278,17 @@ void handle_privmsg(char* raw) {
     struct message_t message_block = create_message(channel, sender, message_buffer);
     print_message_block(&message_block);
 
+    // printf("The tag:\n");
+    // print_tag_header(tag_header);
+    
+    // destroy_tag_header(tag_header);
     // Clear buffers
     memset(message_buffer, 0, sizeof(message_buffer));
     free(sender);
 }
 
 void handle_usernotice(char* raw) {
-    // printf("Usernotice: %s\n", raw);
+    printf("Usernotice: %s\n", raw);
 }
 
 void handle_clearchat(char* raw) {
@@ -317,7 +327,7 @@ void handle_clearchat(char* raw) {
                 memmove(username_str, username_str + 1, strlen(username_str));
                 break;
         }
-        count++;    
+        count++;
     }
 
     printf("CLEARCHAT [%s:%s]\n", channel_str, username_str);
@@ -325,7 +335,7 @@ void handle_clearchat(char* raw) {
 }
 
 void handle_clearmsg(char* raw) {
-
+    printf("Clearmsg: %s\n", raw);
 }
 
 void handle_ping() {
@@ -339,8 +349,9 @@ void handle(char* raw) {
         connected = received_id(raw, 1);
         join_channel("#xqcow");
         join_channel("#illojuan");
-        join_channel("#oozebrood");
-        join_channel("#apoinsettia");
+        join_channel("#elweroking");
+        join_channel("#casimito");
+        join_channel("#loltyler1");
     }
 
     if(!motd) {

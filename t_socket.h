@@ -3,6 +3,7 @@ extern int connect_to_twitch();
 void handle(char* raw);
 char* irc_2_type(char* raw);
 int send_raw(char* raw);
+extern void send_channel_message(struct channel_t* channel, char message[500]);
 void receive_full_chunk(int* more_flag);
 extern void join_channel(char* channel);
 void handle_privmsg(char* raw);
