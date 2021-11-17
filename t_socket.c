@@ -429,6 +429,10 @@ void* thread_start(void *vargs) {
     send_raw(nickname);
     send_raw(username);
 
+    free(password);
+    free(username);
+    free(nickname);
+    
     // Caps
     send_raw("CAP REQ :twitch.tv/commands\r\n");
     send_raw("CAP REQ :twitch.tv/tags\r\n");

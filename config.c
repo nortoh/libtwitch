@@ -4,13 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
-
-struct configuration_t {
-    char* key;
-    char* value;
-    struct configuration_t* next;
-};
+#include "config.h"
+#include "utils.h"
 
 static struct configuration_t* head = 0;
 
@@ -77,17 +72,26 @@ void handle_config_line(char* line) {
     }
 
     struct configuration_t* node = malloc(sizeof(struct configuration_t));
-    int get_key = asprintf(&node->key, "%s", key);
-    int get_value = asprintf(&node->value, "%s", value);
+    sprintf(node->key, "%s", key);
+    sprintf(node->value, "%s", value);
     node->next = 0;
+    
+    add_config_node(node);
+}
 
-    if(!get_key) {
-        printf("Failed to malloc for key (%s:%s)\n", key, value);
-    } else if(!get_value) {
-        printf("Failed to malloc for value (%s:%s)\n", key, value);
+void destroy_configuration() {
+    if(!head) return;
+
+    struct configuration_t* curr = head;
+    int size = 0;
+    while(curr) {
+        struct configuration_t* tmp = curr;
+        curr = curr->next;
+        free(tmp);
+        size ++;
     }
 
-    add_config_node(node);
+    printf(RED "Destroyed %d config nodes\n" RESET, size);
 }
 
 int read_configuration() {
