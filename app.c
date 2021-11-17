@@ -13,6 +13,7 @@ void signal_handler(int signum) {
     {
     default:
         destroy_channels();
+        destroy_configuration();
         exit(0);
         break;
     }
