@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,5 +93,5 @@ void destroy_channels() {
         size++;
     }
 
-    printf(RED "Destroyed %d channels\n" RESET, size);
+    printf("Destroyed %d channels\n", size);
 }

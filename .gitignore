@@ -2,6 +2,11 @@ main
 bot.config
 notes.txt
 
+# Folders
+/logs/
+
 #VSCode
 settings.json
 *.log
+
+

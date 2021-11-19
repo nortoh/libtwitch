@@ -163,8 +163,7 @@ void handle_join(char* raw) {
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* user = create_user(channel, username_str);
-    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " GRN "Joined\n", channel_str, username_str);
-    // printf("%sUser %s has joined%s %s\n", BLU, user->name, RESET, user->channel->name);
+    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " GRN "Joined\n" RESET, channel_str, username_str);
     free(user);
 }
 
@@ -200,7 +199,7 @@ void handle_part(char* raw) {
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* user = create_user(channel, username_str);
-    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " RED "Parted\n", channel_str, username_str);
+    printf(RESET "[" GRN "%s" RESET "/" GRN "%s" RESET "] - " RED "Parted\n" RESET, channel_str, username_str);
     free(user);
 }
 
@@ -279,10 +278,12 @@ void handle_privmsg(char* raw) {
     struct message_t message_block = create_message(channel, sender, message_buffer);
     print_message_block(&message_block);
 
+    // printf("============================\n");
     // printf("The tag:\n");
     // print_tag_header(tag_header);
-    
+    // printf("============================\n");
     // destroy_tag_header(tag_header);
+    
     // Clear buffers
     memset(message_buffer, 0, sizeof(message_buffer));
     free(sender);
@@ -332,11 +333,14 @@ void handle_clearchat(char* raw) {
     }
 
     printf("CLEARCHAT [%s:%s]\n", channel_str, username_str);
-
 }
 
 void handle_clearmsg(char* raw) {
     printf("Clearmsg: %s\n", raw);
+}
+
+void handle_hosttarget(char* raw) {
+    printf("Host Target: %s\n", raw);
 }
 
 void handle_ping() {
@@ -344,10 +348,10 @@ void handle_ping() {
     send_raw("PONG :tmi.twitch.tv\r\n");
 }
 
-void handle(char* raw) {
+void handle(struct irc_message_t message) {
     // Checks
     if(!connected) { 
-        connected = received_id(raw, 1);
+        connected = received_id(message.data, 1);
         join_channel("#xqcow");
         join_channel("#illojuan");
         join_channel("#elweroking");
@@ -357,35 +361,35 @@ void handle(char* raw) {
     }
 
     if(!motd) {
-        motd = received_id(raw, 376);
+        motd = received_id(message.data, 376);
         return;
     } 
 
-    char* irc_type = irc_2_type(raw);
+    char* irc_type = irc_2_type(message.data);
     // printf("Received: %s\n", irc_type);
     // printf("< %s\n", raw);
 
     if(!strcmp("PRIVMSG", irc_type)) {
-        handle_privmsg(raw);
+        handle_privmsg(message.data);
     } else if(!strcmp("JOIN", irc_type)) {
-        handle_join(raw);
+        handle_join(message.data);
         // printf("< %s\n\n\n", raw);
     } else if(!strcmp("PART", irc_type)) {
-        handle_part(raw);
+        handle_part(message.data);
     } else if(!strcmp("PING", irc_type)) {
         handle_ping();
     } else if(!strcmp("CAP", irc_type)) {
         handle_cap();
     } else if(!strcmp("USERNOTICE", irc_type)) {
-        handle_usernotice(raw);
+        handle_usernotice(message.data);
     } else if(!strcmp("NOTICE", irc_type)) {
         // handle_privmsg(raw);
     } else if(!strcmp("CLEARCHAT", irc_type)) {
-        handle_clearchat(raw);
+        handle_clearchat(message.data);
     } else if(!strcmp("CLEARMSG", irc_type)) {
-        handle_clearmsg(raw);
+        handle_clearmsg(message.data);
     } else if(!strcmp("HOSTTARGET", irc_type)) {
-        // handle_privmsg(raw);
+        handle_hosttarget(message.data);
     } else if(!strcmp("CTCP", irc_type)) {
         // handle_privmsg(raw);
     } else if(!strcmp("RECONNECT", irc_type)) {
@@ -394,7 +398,7 @@ void handle(char* raw) {
 
 }
 
-void receive_full_chunk(int* more_flag) {
+void receive_full_chunk(int* more) {
     
     // Clear the recv_buffer before reading in more
     memset(recv_buffer, 0, sizeof(recv_buffer));
@@ -407,7 +411,7 @@ void receive_full_chunk(int* more_flag) {
         full_buffer_size += bytes_recv;
 
         if(newline_flag && carriage_flag) {
-            *more_flag = 0;
+            *more = 0;
         }
     }
 }
@@ -484,8 +488,10 @@ void* thread_start(void *vargs) {
 
             char* token;
             char* result;
+
             for(token = strtok_r(full_buffer, "\r\n", &result); token != 0; token = strtok_r(0, "\r\n", &result)) {
-                handle(token);
+                struct irc_message_t irc_message = create_irc_message(token);
+                handle(irc_message);
             }
             
             // Clear memory when we are done
@@ -517,6 +523,5 @@ int connect_to_twitch() {
     }
 
     pthread_join(socket_thread, 0);
-
     return 1;
 }

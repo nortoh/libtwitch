@@ -27,7 +27,6 @@ if [[ $USE_LOGGING == 1 ]]; then
 fi
 
 
-
 if [[ $USE_VALGRIND == 1 ]]; then
     echo "Running with valgrind"
     echo "################################"

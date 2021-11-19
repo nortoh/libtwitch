@@ -26,7 +26,6 @@ void free_badges(struct badge_t* tag) {
 struct badge_t* disassemble_badge(char* raw) {
     char badge_str[1024];
     strcpy(badge_str, raw);
-    // memmmove(badge_str, badge_str = 1, sizeof(badge_str));
 
     char* badge_split;
     char* badge_result;

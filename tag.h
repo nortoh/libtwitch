@@ -8,9 +8,8 @@ struct tag_header_t {
 };
 
 struct tag_t {
-    char key[50];
-    char value[50];
-    char* target; // channel or user
+    char key[128];
+    char value[128];
     struct badge_t* badges;
     struct tag_t* next;
 };

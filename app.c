@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include<signal.h>
+#include <signal.h>
+#include <pthread.h>
 #include "channel.h"
 #include "user.h"
 #include "bot.h"
@@ -12,6 +13,7 @@ void signal_handler(int signum) {
     switch (signum)
     {
     default:
+        printf("\n");
         destroy_channels();
         destroy_configuration();
         exit(0);
@@ -19,20 +21,26 @@ void signal_handler(int signum) {
     }
 }
 
+void* start_bot_thread() {
+    read_configuration();
+    printf("Loaded configuration\n");
+
+    printf("Connecting as (%s)\n", get_config_value("username"));
+    connect_to_twitch();
+}
+
 int main(int argc, char **argv) {
     signal(SIGINT, signal_handler);
     read_configuration();
-    printf("%sLoaded configuration%s\n", GRN, RESET);
+    
+    pthread_t bot_thread;
+    printf("Creating bot thread\n");
 
-    printf("Driver class\n");
-    printf("Connecting as (%s)\n", get_config_value("username"));
+    if(pthread_create(&bot_thread, 0, start_bot_thread, 0) != 0) {
+        printf("Could not start bot thread");
+        return 0;
+    }
 
-    // Testing
-    struct bot_t* bot = create_bot("bot");
-
-    // This works
-    connect_to_twitch();
-
-    printf("Continuing after socket creation\n");
+    pthread_join(bot_thread, 0);
     return 0;
 }

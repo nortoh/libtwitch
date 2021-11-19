@@ -1,5 +1,3 @@
-#define _GNU_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,16 +80,16 @@ void handle_config_line(char* line) {
 void destroy_configuration() {
     if(!head) return;
 
-    struct configuration_t* curr = head;
     int size = 0;
+    struct configuration_t* curr = head;
     while(curr) {
         struct configuration_t* tmp = curr;
         curr = curr->next;
         free(tmp);
-        size ++;
+        size++;
     }
 
-    printf(RED "Destroyed %d config nodes\n" RESET, size);
+    printf("Destroyed %d config nodes\n", size);
 }
 
 int read_configuration() {
@@ -99,6 +97,8 @@ int read_configuration() {
     char* line;
     size_t len = 0;
     ssize_t read;
+    
+    char* sample_config = "username=?\noauth_key=?\n";
 
     fp = fopen("bot.config", "r");
     if(!fp) {
