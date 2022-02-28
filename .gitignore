@@ -1,3 +1,4 @@
+out
 main
 bot.config
 notes.txt
@@ -8,5 +9,4 @@ notes.txt
 #VSCode
 settings.json
 *.log
-
 

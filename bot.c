@@ -9,4 +9,3 @@ struct bot_t* create_bot(char* name) {
     bot->name = name;
     return bot;
 }
-

@@ -23,7 +23,7 @@ int has_key(char* key) {
 
 void add_config_node(struct configuration_t* node) {
     if(has_key(node->key)) return;
-    
+
     node->next = head;
     head = node;
 }
@@ -37,7 +37,7 @@ char* get_config_value(char* key) {
         }
         curr = curr->next;
     }
-    
+
     return "DNF";
 }
 
@@ -73,7 +73,7 @@ void handle_config_line(char* line) {
     sprintf(node->key, "%s", key);
     sprintf(node->value, "%s", value);
     node->next = 0;
-    
+
     add_config_node(node);
 }
 
@@ -97,7 +97,7 @@ int read_configuration() {
     char* line;
     size_t len = 0;
     ssize_t read;
-    
+
     char* sample_config = "username=?\noauth_key=?\n";
 
     fp = fopen("bot.config", "r");

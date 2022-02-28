@@ -81,7 +81,7 @@ int conn(char* host, int port) {
     serv_addr.sin_port = htons(port);
 
     printf("Created socket\n");
-    
+
     // Convert IP to binary form
     if(inet_pton(AF_INET, host, &serv_addr.sin_addr) <= 0) {
         printf("Failed to convert IP to binary form\n");
@@ -113,7 +113,7 @@ int received_id(char* line, int id) {
             continue;
         }
         received_id = atoi(token);
-        break;    
+        break;
     }
     free(copy);
     return received_id == id;
@@ -145,12 +145,12 @@ void handle_join(char* raw) {
             case 0:
                 sprintf(username_str, "%s", get_username_from_host(token));
                 break;
-            
+
             // Do nothing
             case 1:
-            
+
                 break;
-            
+
             // Channel
             case 2:
                 sprintf(channel_str, "%s", token);
@@ -182,11 +182,11 @@ void handle_part(char* raw) {
             case 0:
                 sprintf(username_str, "%s", get_username_from_host(token));
                 break;
-            
+
             // Do nothing
             case 1:
                 break;
-            
+
             // Channel
             case 2:
                 sprintf(channel_str, "%s", token);
@@ -214,8 +214,8 @@ void handle_privmsg(char* raw) {
 
     char* token;
     char* result;
-    int count = 0;    
-    
+    int count = 0;
+
     struct tag_header_t* tag_header = 0;
 
     // Grab information for private message
@@ -265,15 +265,15 @@ void handle_privmsg(char* raw) {
                 }
                 break;
         }
-        count++;    
+        count++;
     }
-    
+
     memmove(message_buffer, message_buffer + 1, strlen(message_buffer));    // Remove ":"
     message_buffer[message_buffer_size - 1] = '\0';
 
     struct channel_t* channel = get_channel(channel_str);
     struct user_t* sender = create_user(channel, username_str);
-    
+
     // If we do not free these users eventually, we will fill up our heap!!!
     struct message_t message_block = create_message(channel, sender, message_buffer);
     print_message_block(&message_block);
@@ -283,7 +283,7 @@ void handle_privmsg(char* raw) {
     // print_tag_header(tag_header);
     // printf("============================\n");
     // destroy_tag_header(tag_header);
-    
+
     // Clear buffers
     memset(message_buffer, 0, sizeof(message_buffer));
     free(sender);
@@ -300,7 +300,7 @@ void handle_clearchat(char* raw) {
 
     char* token;
     char* result;
-    int count = 0;    
+    int count = 0;
 
     // Grab information for private message
     for(token = strtok_r(raw, " ", &result); token != 0; token = strtok_r(0, " ", &result)) {
@@ -323,7 +323,7 @@ void handle_clearchat(char* raw) {
             case 3:
                 sprintf(channel_str, "%s", token);
                 break;
-            
+
             case 4:
                 sprintf(username_str, "%s", token);
                 memmove(username_str, username_str + 1, strlen(username_str));
@@ -350,7 +350,7 @@ void handle_ping() {
 
 void handle(struct irc_message_t message) {
     // Checks
-    if(!connected) { 
+    if(!connected) {
         connected = received_id(message.data, 1);
         join_channel("#xqcow");
         join_channel("#illojuan");
@@ -363,7 +363,7 @@ void handle(struct irc_message_t message) {
     if(!motd) {
         motd = received_id(message.data, 376);
         return;
-    } 
+    }
 
     char* irc_type = irc_2_type(message.data);
     // printf("Received: %s\n", irc_type);
@@ -399,7 +399,7 @@ void handle(struct irc_message_t message) {
 }
 
 void receive_full_chunk(int* more) {
-    
+
     // Clear the recv_buffer before reading in more
     memset(recv_buffer, 0, sizeof(recv_buffer));
 
@@ -423,11 +423,11 @@ void* thread_start(void *vargs) {
     char* password;
     char* username;
     char* nickname;
-    
+
     asprintf(&password, "PASS %s\r\n", get_config_value("oauth_key"));
     asprintf(&nickname, "NICK %s\r\n", get_config_value("username"));
     asprintf(&username, "USER %s\r\n", get_config_value("username"));
-    
+
     // Auth
     send_raw(password);
     send_raw(nickname);
@@ -436,7 +436,7 @@ void* thread_start(void *vargs) {
     free(password);
     free(username);
     free(nickname);
-    
+
     // Caps
     send_raw("CAP REQ :twitch.tv/commands\r\n");
     send_raw("CAP REQ :twitch.tv/tags\r\n");
@@ -483,7 +483,7 @@ void* thread_start(void *vargs) {
                 memmove(full_buffer, recv_buffer, bytes_recv * sizeof(char));
             }
 
-            // Add null termination 
+            // Add null termination
             full_buffer[full_buffer_size - 1] = '\0';
             full_buffer_size = 0;
 
@@ -494,7 +494,7 @@ void* thread_start(void *vargs) {
                 struct irc_message_t irc_message = create_irc_message(token);
                 handle(irc_message);
             }
-            
+
             // Clear memory when we are done
             memset(full_buffer, 0, sizeof(full_buffer));
             memset(recv_buffer, 0, sizeof(recv_buffer));

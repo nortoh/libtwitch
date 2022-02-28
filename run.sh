@@ -4,7 +4,7 @@ USE_LOGGING=0
 
 while getopts "vl:" o; do
     case "${o}" in
-        v) 
+        v)
             USE_VALGRIND=1
             ;;
         l)
@@ -30,7 +30,7 @@ fi
 if [[ $USE_VALGRIND == 1 ]]; then
     echo "Running with valgrind"
     echo "################################"
-    
+
     if [[ $USE_LOGGING == 1 ]]; then
         valgrind --leak-check=yes ./main > $LOG_FILE
     else

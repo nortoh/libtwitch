@@ -19,7 +19,7 @@ void list_channels() {
 int has_channel(struct channel_t* channel) {
     struct channel_t* curr = head;
 
-    while(curr) {    
+    while(curr) {
         if(strcmp(curr->name, channel->name) == 0) {
             return 1;
         }
@@ -72,7 +72,7 @@ struct channel_t* get_channel(char* name) {
         }
         curr = curr->next;
     }
-    
+
     return 0;
 }
 

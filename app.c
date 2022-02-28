@@ -10,14 +10,13 @@
 #include "utils.h"
 
 void signal_handler(int signum) {
-    switch (signum)
-    {
-    default:
-        printf("\n");
-        destroy_channels();
-        destroy_configuration();
-        exit(0);
-        break;
+    switch (signum) {
+        default:
+            printf("\n");
+            destroy_channels();
+            destroy_configuration();
+            exit(0);
+            break;
     }
 }
 
@@ -32,7 +31,7 @@ void* start_bot_thread() {
 int main(int argc, char **argv) {
     signal(SIGINT, signal_handler);
     read_configuration();
-    
+
     pthread_t bot_thread;
     printf("Creating bot thread\n");
 

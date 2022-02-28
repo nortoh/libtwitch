@@ -15,7 +15,7 @@ void print_tag_header(struct tag_header_t* header) {
 
 void free_tag_header(struct tag_header_t* header) {
     struct tag_t* curr = header->tags;
-    
+
     if(header->badges != 0) {
         free_badges(header->badges);
         printf("Freeing %p\n", (void *) header->badges);
@@ -52,7 +52,7 @@ void destroy_tag_header(struct tag_header_t* header) {
 
 void disassemble_tag(struct tag_header_t* header, char* raw) {
     char tag_str[1024];
-    strcpy(tag_str, raw); 
+    strcpy(tag_str, raw);
     memmove(tag_str, tag_str + 1, sizeof(tag_str));
 
     char* token_split;
@@ -76,19 +76,19 @@ void disassemble_tag(struct tag_header_t* header, char* raw) {
             }
             pair_count++;
         }
-        
+
         // Empty value
         if(pair_count == 1) {
             strcpy(value, "0");
         }
-        
+
         struct tag_t* next = create_tag_pair(key, value);
-        
+
         if(!strcmp(key, "badges") && strcmp(value, "0")) {
             // struct badge_t* badges = disassemble_badge(value);
             // header->badges = badges;
         }
-        
+
         if(!head) {
             head = next;
             curr = next;
