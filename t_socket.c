@@ -451,6 +451,7 @@ void* thread_start(void *vargs) {
     // Clear recv_buffer
     memset(recv_buffer, 0, sizeof(recv_buffer));
 
+    // Sleep before reading data to allow server to process authorization and CAPS
     sleep(1);
 
     while(running) {
