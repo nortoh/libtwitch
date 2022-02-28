@@ -5,8 +5,13 @@
 #include "channel.h"
 #include "utils.h"
 
+/** Channel head */
 static struct channel_t *head = 0;
 
+/**
+ * @brief Print all channels
+ *
+ */
 void list_channels() {
     struct channel_t* curr = head;
 
@@ -16,6 +21,12 @@ void list_channels() {
     }
 }
 
+/**
+ * @brief Does channel exist in channel linked-list
+ *
+ * @param channel
+ * @return int
+ */
 int has_channel(struct channel_t* channel) {
     struct channel_t* curr = head;
 
@@ -28,6 +39,12 @@ int has_channel(struct channel_t* channel) {
     return 0;
 }
 
+/**
+ * @brief Create a channel object
+ *
+ * @param name
+ * @return struct channel_t*
+ */
 struct channel_t* create_channel(char* name) {
     struct channel_t* channel = malloc(sizeof(struct channel_t));
     sprintf(channel->name, "%s", name);
@@ -35,6 +52,12 @@ struct channel_t* create_channel(char* name) {
     return channel;
 }
 
+/**
+ * @brief Add channel to the top of channel linked-list
+ *
+ * @param name
+ * @return struct channel_t*
+ */
 struct channel_t* add_channel(char* name) {
     struct channel_t* channel = create_channel(name);
     channel->next = head;
@@ -42,6 +65,11 @@ struct channel_t* add_channel(char* name) {
     return channel;
 }
 
+/**
+ * @brief Remove channel and relink channel linked-list
+ *
+ * @param channel
+ */
 void remove_channel(struct channel_t* channel) {
     if(!strcmp(head->name, channel->name)) {
         struct channel_t* tmp = head;
@@ -63,6 +91,12 @@ void remove_channel(struct channel_t* channel) {
     }
 }
 
+/**
+ * @brief Get the channel object
+ *
+ * @param name
+ * @return struct channel_t*
+ */
 struct channel_t* get_channel(char* name) {
     struct channel_t* curr = head;
 
@@ -76,12 +110,22 @@ struct channel_t* get_channel(char* name) {
     return 0;
 }
 
+/**
+ * @brief Remove channel from channel linked-list and free channel object
+ *
+ * @param channel
+ * @return int
+ */
 int destroy_channel(struct channel_t* channel) {
     remove_channel(channel);
     free(channel);
     return 1;
 }
 
+/**
+ * @brief Destroy all channels from memory
+ *
+ */
 void destroy_channels() {
     struct channel_t* curr = head;
 

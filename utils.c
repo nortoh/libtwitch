@@ -1,14 +1,31 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * @brief Print info message
+ *
+ * @param file
+ * @param message
+ */
 void info(char* file, char* message) {
     printf("[%s] %s", file, message);
 }
 
-void erorr(char* file, char* message) {
+/**
+ * @brief Print error message
+ *
+ * @param file
+ * @param message
+ */
+void error(char* file, char* message) {
     printf("!!! [%s] %s", file, message);
 }
 
+/**
+ * @brief Trim whitespaces from a string
+ *
+ * @param data
+ */
 void trim_whitespaces(char* data) {
     size_t len = strlen(data);
 
@@ -23,6 +40,11 @@ void trim_whitespaces(char* data) {
     }
 }
 
+/**
+ * @brief Print a mark "@@@@"
+ *
+ * @param n
+ */
 void mark(int n) {
     for(int i = 0; i < n; i++) {
         printf("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n");

@@ -5,12 +5,24 @@
 #include "config.h"
 #include "utils.h"
 
+/** Configuration head */
 static struct configuration_t* head = 0;
 
+/**
+ * @brief Print configuration node
+ *
+ * @param node
+ */
 void print_config_node(struct configuration_t* node) {
     printf("[Config] Key: %s, Value: %s\n", node->key, node->value);
 }
 
+/**
+ * @brief Does key exist in configuration memory
+ *
+ * @param key
+ * @return int
+ */
 int has_key(char* key) {
     struct configuration_t* curr = head;
 
@@ -21,6 +33,11 @@ int has_key(char* key) {
     return 0;
 }
 
+/**
+ * @brief Add new configuration node
+ *
+ * @param node
+ */
 void add_config_node(struct configuration_t* node) {
     if(has_key(node->key)) return;
 
@@ -28,6 +45,12 @@ void add_config_node(struct configuration_t* node) {
     head = node;
 }
 
+/**
+ * @brief Get the config value object
+ *
+ * @param key
+ * @return char*
+ */
 char* get_config_value(char* key) {
     struct configuration_t* curr = head;
 
@@ -41,6 +64,10 @@ char* get_config_value(char* key) {
     return "DNF";
 }
 
+/**
+ * @brief Print configuration
+ *
+ */
 void get_config_loaded() {
     struct configuration_t* curr = head;
 
@@ -50,6 +77,11 @@ void get_config_loaded() {
     }
 }
 
+/**
+ * @brief Handle line from configuration file
+ *
+ * @param line
+ */
 void handle_config_line(char* line) {
     char* token;
     char* result;
@@ -77,6 +109,10 @@ void handle_config_line(char* line) {
     add_config_node(node);
 }
 
+/**
+ * @brief Destory configuration from memory
+ *
+ */
 void destroy_configuration() {
     if(!head) return;
 
@@ -92,6 +128,11 @@ void destroy_configuration() {
     printf("Destroyed %d config nodes\n", size);
 }
 
+/**
+ * @brief Read configuration into memory
+ *
+ * @return int
+ */
 int read_configuration() {
     FILE* fp;
     char* line;

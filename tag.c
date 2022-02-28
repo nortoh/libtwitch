@@ -4,6 +4,11 @@
 #include "tag.h"
 #include "badge.h"
 
+/**
+ * @brief Print tag linked-list from header
+ *
+ * @param header
+ */
 void print_tag_header(struct tag_header_t* header) {
     struct tag_t* curr = header->tags;
 
@@ -13,6 +18,11 @@ void print_tag_header(struct tag_header_t* header) {
     }
 }
 
+/**
+ * @brief Free tag from header
+ *
+ * @param header
+ */
 void free_tag_header(struct tag_header_t* header) {
     struct tag_t* curr = header->tags;
 
@@ -29,12 +39,23 @@ void free_tag_header(struct tag_header_t* header) {
     }
 }
 
+/**
+ * @brief Create a tag object
+ *
+ * @param raw
+ * @return struct tag_header_t*
+ */
 struct tag_header_t* create_tag(char* raw) {
     struct tag_header_t* header = malloc(sizeof(struct tag_header_t));
     disassemble_tag(header, raw);
     return header;
 }
 
+/**
+ * @brief Destory tag header from memory
+ *
+ * @param header
+ */
 void destroy_tag_header(struct tag_header_t* header) {
     if(!header) return;
 
@@ -50,6 +71,12 @@ void destroy_tag_header(struct tag_header_t* header) {
     free(header);
 }
 
+/**
+ * @brief Dissamble tag and attach to tag header
+ *
+ * @param header
+ * @param raw
+ */
 void disassemble_tag(struct tag_header_t* header, char* raw) {
     char tag_str[1024];
     strcpy(tag_str, raw);
@@ -101,6 +128,13 @@ void disassemble_tag(struct tag_header_t* header, char* raw) {
     header->tags = head;
 }
 
+/**
+ * @brief Create a tag pair object
+ *
+ * @param key
+ * @param value
+ * @return struct tag_t*
+ */
 struct tag_t* create_tag_pair(char* key, char* value) {
     struct tag_t* tag = malloc(sizeof(struct tag_t));
     strcpy(tag->key, key);

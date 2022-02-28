@@ -24,12 +24,24 @@ static size_t bytes_recv = 0, full_buffer_size = 0;
 static char recv_buffer[MAX_RECV_SIZE] = {0};
 static char full_buffer[FULL_BUFFER_SIZE * MAX_RECV_SIZE];
 
+/**
+ * @brief Send raw string through socket
+ *
+ * @param raw
+ * @return int
+ */
 int send_raw(char* raw) {
     if(!sock) return -1;
     printf("%s>%s Sending %s", GRN, RESET, raw);
     return send(sock, raw, strlen(raw), 0);
 }
 
+/**
+ * @brief Convert IRC string to IRC type
+ *
+ * @param raw
+ * @return char*
+ */
 char* irc_2_type(char* raw) {
     // We must make sure PRIVMSG is not part of any other type
     // since it allows for "code injection".
@@ -49,6 +61,11 @@ char* irc_2_type(char* raw) {
     return "NA";
 }
 
+/**
+ * @brief Join channel
+ *
+ * @param channel
+ */
 void join_channel(char* channel) {
     char buffer[1024];
     sprintf(buffer, "JOIN %s\r\n", channel);
@@ -56,6 +73,11 @@ void join_channel(char* channel) {
     send_raw(buffer);
 }
 
+/**
+ * @brief Part channel
+ *
+ * @param name
+ */
 void part_channel(char* name) {
     char buffer[1024];
     struct channel_t* channel = get_channel(name);
@@ -64,12 +86,25 @@ void part_channel(char* name) {
     send_raw(buffer);
 }
 
+/**
+ * @brief Send channel message
+ *
+ * @param channel
+ * @param message
+ */
 void send_channel_message(struct channel_t* channel, char message[500]) {
     char buffer[1024];
     sprintf(buffer, "PRIVMSG %s : %s\t\n", channel->name, message);
     send_raw(buffer);
 }
 
+/**
+ * @brief Connect to chat server
+ *
+ * @param host
+ * @param port
+ * @return int
+ */
 int conn(char* host, int port) {
 
     // Initalize socket
@@ -99,6 +134,13 @@ int conn(char* host, int port) {
     return 1;
 }
 
+/**
+ * @brief Check if ID is location in LINE
+ *
+ * @param line
+ * @param id
+ * @return int
+ */
 int received_id(char* line, int id) {
     char* copy = strdup(line);
     char* token;
@@ -119,17 +161,32 @@ int received_id(char* line, int id) {
     return received_id == id;
 }
 
-char* get_username_from_host(char* line) {
+/**
+ * @brief Get the username from line
+ *
+ * @param line
+ * @return char*
+ */
+char* get_username_from_line(char* line) {
     char* username_result;
     char* username = strtok_r(line, "!", &username_result);
     memmove(username, username + 1, strlen(username));
     return username;
 }
 
+/**
+ * @brief Handle CAP
+ *
+ */
 void handle_cap() {
     // printf("Received good ACK\n");
 }
 
+/**
+ * @brief Handle JOIN
+ *
+ * @param raw
+ */
 void handle_join(char* raw) {
     char* token;
     char* result;
@@ -143,7 +200,7 @@ void handle_join(char* raw) {
 
             // Username and Host
             case 0:
-                sprintf(username_str, "%s", get_username_from_host(token));
+                sprintf(username_str, "%s", get_username_from_line(token));
                 break;
 
             // Do nothing
@@ -167,6 +224,11 @@ void handle_join(char* raw) {
     free(user);
 }
 
+/**
+ * @brief Handle PART
+ *
+ * @param raw
+ */
 void handle_part(char* raw) {
     char* token;
     char* result;
@@ -180,7 +242,7 @@ void handle_part(char* raw) {
 
             // Username and Host
             case 0:
-                sprintf(username_str, "%s", get_username_from_host(token));
+                sprintf(username_str, "%s", get_username_from_line(token));
                 break;
 
             // Do nothing
@@ -203,6 +265,11 @@ void handle_part(char* raw) {
     free(user);
 }
 
+/**
+ * @brief Handle PRIVMSG
+ *
+ * @param raw
+ */
 void handle_privmsg(char* raw) {
     int building = 0;
     char message_buffer[3 * 1024] = {0}; // 3KB
@@ -229,7 +296,7 @@ void handle_privmsg(char* raw) {
 
             // Sender
             case 1:
-                sprintf(username_str, "%s", get_username_from_host(token));
+                sprintf(username_str, "%s", get_username_from_line(token));
                 break;
 
             // Do nothing (irc_type)
@@ -289,10 +356,20 @@ void handle_privmsg(char* raw) {
     free(sender);
 }
 
+/**
+ * @brief Handle USERNOTICE
+ *
+ * @param raw
+ */
 void handle_usernotice(char* raw) {
     printf("Usernotice: %s\n", raw);
 }
 
+/**
+ * @brief Handle CLEARCHAT
+ *
+ * @param raw
+ */
 void handle_clearchat(char* raw) {
     char tag_str[500];
     char username_str[30];
@@ -335,19 +412,38 @@ void handle_clearchat(char* raw) {
     printf("CLEARCHAT [%s:%s]\n", channel_str, username_str);
 }
 
+/**
+ * @brief Handle CLEARMSG
+ *
+ * @param raw
+ */
 void handle_clearmsg(char* raw) {
     printf("Clearmsg: %s\n", raw);
 }
 
+/**
+ * @brief Handle HOSTTARGET
+ *
+ * @param raw
+ */
 void handle_hosttarget(char* raw) {
     printf("Host Target: %s\n", raw);
 }
 
+/**
+ * @brief Handle PING
+ *
+ */
 void handle_ping() {
     mark(20);
     send_raw("PONG :tmi.twitch.tv\r\n");
 }
 
+/**
+ * @brief Handle connection
+ *
+ * @param message
+ */
 void handle(struct irc_message_t message) {
     // Checks
     if(!connected) {
@@ -398,6 +494,11 @@ void handle(struct irc_message_t message) {
 
 }
 
+/**
+ * @brief Receive full application message
+ *
+ * @param more
+ */
 void receive_full_chunk(int* more) {
 
     // Clear the recv_buffer before reading in more
@@ -416,6 +517,12 @@ void receive_full_chunk(int* more) {
     }
 }
 
+/**
+ * @brief Thread body for starting connection
+ *
+ * @param vargs
+ * @return void*
+ */
 void* thread_start(void *vargs) {
 
     int connection = conn("44.226.36.141", 6667);
@@ -509,7 +616,11 @@ void* thread_start(void *vargs) {
     }
 }
 
-
+/**
+ * @brief Connect to Twitch's chat server
+ *
+ * @return int
+ */
 int connect_to_twitch() {
 
     // Socket thread identifier

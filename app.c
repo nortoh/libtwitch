@@ -9,6 +9,11 @@
 #include "config.h"
 #include "utils.h"
 
+/**
+ * @brief Handle signals
+ *
+ * @param signum
+ */
 void signal_handler(int signum) {
     switch (signum) {
         default:
@@ -20,6 +25,11 @@ void signal_handler(int signum) {
     }
 }
 
+/**
+ * @brief Start bot thread
+ *
+ * @return void*
+ */
 void* start_bot_thread() {
     read_configuration();
     printf("Loaded configuration\n");
@@ -28,6 +38,13 @@ void* start_bot_thread() {
     connect_to_twitch();
 }
 
+/**
+ * @brief Main method
+ *
+ * @param argc
+ * @param argv
+ * @return int
+ */
 int main(int argc, char **argv) {
     signal(SIGINT, signal_handler);
     read_configuration();

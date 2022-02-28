@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include "badge.h"
 
-
+/**
+ * @brief Print all bridges from a given badge linked-list
+ *
+ * @param badge
+ */
 void print_badges(struct badge_t* badge) {
     struct badge_t* curr = badge;
 
@@ -13,6 +17,11 @@ void print_badges(struct badge_t* badge) {
     }
 }
 
+/**
+ * @brief Free all badges from a given badge linked-list
+ *
+ * @param tag
+ */
 void free_badges(struct badge_t* tag) {
     struct badge_t* curr = tag;
     while(curr) {
@@ -23,6 +32,12 @@ void free_badges(struct badge_t* tag) {
     }
 }
 
+/**
+ * @brief Dissamble badge and create badge linked-list
+ *
+ * @param raw
+ * @return struct badge_t*
+ */
 struct badge_t* disassemble_badge(char* raw) {
     char badge_str[1024];
     strcpy(badge_str, raw);
@@ -64,6 +79,13 @@ struct badge_t* disassemble_badge(char* raw) {
     return head;
 }
 
+/**
+ * @brief Create a badge pair object
+ *
+ * @param key
+ * @param value
+ * @return struct badge_t*
+ */
 struct badge_t* create_badge_pair(char* key, char* value) {
     struct badge_t* badge = malloc(sizeof(struct badge_t));
     strcpy(badge->key, key);
