@@ -2,8 +2,6 @@
 #include "bot.h"
 #include "channel.h"
 
-static char* name = 0;
-
 /**
  * @brief Create a bot object
  *
