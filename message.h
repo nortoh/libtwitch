@@ -1,3 +1,4 @@
+#include <sys/time.h>
 #ifndef __MESSAGE_H__
 #define __MESSAGE_H__
 
@@ -10,7 +11,7 @@ struct message_t {
     struct user_t* sender;
     struct channel_t* channel;
     struct tag_header_t* tag;
-    struct timeval* time;
+    struct timeval time;
 };
 
 /**
